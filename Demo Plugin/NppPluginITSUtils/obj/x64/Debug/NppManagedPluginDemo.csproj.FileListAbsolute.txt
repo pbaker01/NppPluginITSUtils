@@ -1,0 +1,9 @@
+D:\Repos\NotepadPlusPlusPluginPack.Net\Demo Plugin\NppManagedPluginDemo\bin\Debug-x64\Demo.dll
+D:\Repos\NotepadPlusPlusPluginPack.Net\Demo Plugin\NppManagedPluginDemo\bin\Debug-x64\Demo.pdb
+D:\Repos\NotepadPlusPlusPluginPack.Net\Demo Plugin\NppManagedPluginDemo\obj\x64\Debug\NppManagedPluginDemo.csproj.AssemblyReference.cache
+D:\Repos\NotepadPlusPlusPluginPack.Net\Demo Plugin\NppManagedPluginDemo\obj\x64\Debug\Kbg.Demo.Namespace.frmGoToLine.resources
+D:\Repos\NotepadPlusPlusPluginPack.Net\Demo Plugin\NppManagedPluginDemo\obj\x64\Debug\NppPluginNET.Properties.Resources.resources
+D:\Repos\NotepadPlusPlusPluginPack.Net\Demo Plugin\NppManagedPluginDemo\obj\x64\Debug\NppManagedPluginDemo.csproj.GenerateResource.cache
+D:\Repos\NotepadPlusPlusPluginPack.Net\Demo Plugin\NppManagedPluginDemo\obj\x64\Debug\NppManagedPluginDemo.csproj.CoreCompileInputs.cache
+D:\Repos\NotepadPlusPlusPluginPack.Net\Demo Plugin\NppManagedPluginDemo\obj\x64\Debug\Demo.dll
+D:\Repos\NotepadPlusPlusPluginPack.Net\Demo Plugin\NppManagedPluginDemo\obj\x64\Debug\Demo.pdb
