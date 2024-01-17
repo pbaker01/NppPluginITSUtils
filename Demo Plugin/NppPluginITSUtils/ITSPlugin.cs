@@ -196,7 +196,7 @@ namespace Kbg.Demo.Namespace
 
             // Get line text and convert to char array
             editor.SetTargetRange(strSel, endSel);
-            string procName = editor.GetTargetText();
+            string procName = editor.GetTargetText().Trim();
 
             // Proc name must be btwn 1-12 characters.
             if (procName.Length <= 0) {
@@ -286,17 +286,17 @@ namespace Kbg.Demo.Namespace
 
             // Get line text and convert to char array
             editor.SetTargetRange(strSel, endSel);
-            string recordName = editor.GetTargetText();
+            string recordName = editor.GetTargetText().Trim();
 
-            // Proc name must be btwn 1-12 characters.
+            // Proc name may be btwn 1-60 characters.
             if (recordName.Length <= 0)
             {
                 MessageBox.Show("Err LPC001 - No Selection for Proc Name");
                 return;
             }
-            else if (recordName.Length > 12)
+            else if (recordName.Length > 60)
             {
-                MessageBox.Show("Err LPC002 - Record Name: " + recordName + " is greater than 12 characters.");
+                MessageBox.Show("Err LPC002 - Record Name: " + recordName + " is greater than 60 characters.");
                 return;
             }
 
