@@ -291,7 +291,7 @@ namespace Kbg.Demo.Namespace
             // Proc name may be btwn 1-60 characters.
             if (recordName.Length <= 0)
             {
-                MessageBox.Show("Err LPC001 - No Selection for Proc Name");
+                MessageBox.Show("Err LPC001 - No Selection for Proc Name"); 
                 return;
             }
             else if (recordName.Length > 60)
