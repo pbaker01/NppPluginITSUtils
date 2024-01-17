@@ -23,7 +23,7 @@ namespace JSON_Tools.Utils
             Category("General"), DefaultValue("??")]
         public string initials { get; set; }
 
-        [Description("Working Environment. Used for proc/record retrieval."),
+        [Description("Working Environment.  Used for proc/record retrieval."),
             Category("General"), DefaultValue(ITSENums.ENVIRONMENT.Development)]
         public ENVIRONMENT workingEnvt { get; set; }
 
