@@ -16,7 +16,7 @@ namespace JSON_Tools.Utils
         [Description("Initials used for creating a change\r\n" +
                      "comment.  Change comments go in columns 1-6\r\n" +
                      "and are formatted as xxmmyy Where:\r\n" +
-                     "xx - Initials entered here\r\n" +
+                     "xx - Initials entered here \r\n" +
                      "mm - current numeric month of year\r\n" +
                      "yy - last two digits of current year."
             ),
