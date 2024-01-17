@@ -261,7 +261,7 @@ namespace Kbg.Demo.Namespace
          *                                                                                       *
          * The following steps are performed:                                                    *
          *   1. Get the text selected. This text represents the DMS record name.                 *
-         *   2. The record name is validated. It must be from 1 to 12 characters                 *
+         *   2. The record name is validated. It must be from 1 to 60 characters                 *
          *   3. Get the Unisys schema file name from settings (user config).                     *
          *      o - Get schema file name using the selected environment.                         *
          *      o - The file name consists of a file qualifier file name and element name.       *
