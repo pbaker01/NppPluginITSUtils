@@ -145,6 +145,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Utils\ITSConstants.cs" />
     <Compile Include="Utils\ITSEnums.cs" />
     <Compile Include="Utils\Settings.cs" />
   </ItemGroup>

@@ -12,6 +12,11 @@ using System.Text.RegularExpressions;
 using static System.Net.Mime.MediaTypeNames;
 using System.Linq.Expressions;
 using static ITS.Utils.ITSENums;
+using static ITS.Utils.ITSConstants;
+using ITS.Utils;
+using System.Resources;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using System.Net.NetworkInformation;
 
 namespace Kbg.NppPluginNET
 {
@@ -57,12 +62,13 @@ namespace Kbg.Demo.Namespace
         static IScintillaGateway editor = new ScintillaGateway(PluginBase.GetCurrentScintilla());
         static INotepadPPGateway notepad = new NotepadPPGateway();
 
-        struct ExistStatus
+        struct ITSStatus
         {
-            public bool fileExists;
-            public bool msgSent;
-            public string filePath;
+            public bool errorOccured;
+            public int errorNum;
+            public string errorText;
         }
+
 
         #endregion
 
@@ -104,6 +110,8 @@ namespace Kbg.Demo.Namespace
             PluginBase.SetCommand(3, "---", null);
             PluginBase.SetCommand(4, "View COBOL Proc", loadCOBOLProc);
             PluginBase.SetCommand(5, "View DMS Schema Record", loadDMSSchemaRecord);
+            PluginBase.SetCommand(5, "View Program/Element from Lcl Workspace.", loadEltFromWorkspace);
+            PluginBase.SetCommand(5, "View Program/Element from Env SRC file.", loadEltFromSRCFile);
         }
 
         static internal void SetToolBarIcon()
@@ -183,32 +191,93 @@ namespace Kbg.Demo.Namespace
             settings.ShowDialog("Settings for NY ITS NPP Plugin");
         }
 
-        /*
-         * 
-         */
-        static void loadCOBOLProc()
-        {
-            // Get selection start and end positions.
-            // If selStr and selEnd are equal then there is no selection,
-            // just process the line the caret is on.
-            var strSel = editor.GetSelectionStart();
-            var endSel = editor.GetSelectionEnd();
+        static void loadEltFromWorkspace() {
+            ITSStatus itsStatus;
 
-            // Get line text and convert to char array
-            editor.SetTargetRange(strSel, endSel);
-            string procName = editor.GetTargetText().Trim();
-
-            // Proc name must be btwn 1-12 characters.
-            if (procName.Length <= 0) {
-                MessageBox.Show("Err LPC001 - No Selection for Proc Name");
-                return;
-            } else if (procName.Length >= 13) {
-                MessageBox.Show("Err LPC002 - Proc Name: " + procName + " is greater than 12 characters.");
+            string fileName = settings.WorkSpaceSRCFile;
+            itsStatus = validateFileName(fileName);
+            if (itsStatus.errorOccured) {
+                showError(itsStatus.errorText);
                 return;
             }
 
-            string procFile1 = "";
-            string procFile2 = "";
+            string elementName = getSelectedText();
+            itsStatus = validateElementName(elementName);
+            if (itsStatus.errorOccured) {
+                showError(itsStatus.errorText);
+                return;
+            }
+
+            itsStatus = loadEltFrmFile(fileName, elementName);
+            if (itsStatus.errorOccured) {
+                showError(itsStatus.errorText);
+                return;
+            }
+
+            if (!itsStatus.errorOccured) {
+                // Set to Tab Color 2
+                Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_VIEW_TAB_COLOUR_1);
+            }
+        }
+
+        static void loadEltFromSRCFile() {
+
+            ITSStatus status = new ITSStatus();
+            string fileName;
+
+            switch (settings.workingEnvt)
+            {
+                case ENVIRONMENT.Development:
+                    fileName = settings.DEVSRCFile;
+                    break;
+                case ENVIRONMENT.UserTest:
+                    fileName = settings.TSTSRCFile;
+                    break;
+                case ENVIRONMENT.Pseudo:
+                    fileName = settings.PSDSRCFile;
+                    break;
+                default:
+                    status.errorOccured = true;
+                    // Environment not specified.
+                    status.errorNum = (int) ERRORS.ITSERR007;
+                    status.errorText = errorText[status.errorNum];
+                    return;
+            }
+            status = validateFileName(fileName);
+            if (status.errorOccured) {
+                showError(status.errorText);
+                return;
+            }
+
+            string elementName = getSelectedText();
+            status = validateElementName(elementName);
+            if (status.errorOccured) {
+                showError(status.errorText);
+                return;
+            }
+
+            status = loadEltFrmFile(fileName, elementName);
+            if (status.errorOccured) {
+                showError(status.errorText);
+                return;
+            }
+
+
+            if (!status.errorOccured) {
+                // Set to Tab Color 2
+                Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_VIEW_TAB_COLOUR_1);
+            }
+
+        }
+
+            static void loadCOBOLProc()
+        {
+            ITSStatus status = new ITSStatus();
+
+            string procFile1;
+            string procFile2;
+
+            string procFiles = "";   // Used for error reporting.. 
 
             switch (settings.workingEnvt)
             {
@@ -225,21 +294,84 @@ namespace Kbg.Demo.Namespace
                     procFile2 = settings.PSDproc2File;
                     break;
                 default:
-                    MessageBox.Show("Err LPC003 - Environment not set. Please check Settings.");
+                    status.errorOccured = true;
+                    status.errorText = errorText[(int)ERRORS.ITSERR008];
+                    showError(status.errorText);
                     return;
             }
 
-            ExistStatus status = DoesFileExist("Proc File 1: ", procFile1, procName);
-            if (!status.fileExists) {
-                status = DoesFileExist("Proc File 2: ", procFile2, procName);
-                if (!status.fileExists) {
-                    MessageBox.Show("Err LPC003 - Proc not found. Check your environment and file settings.");
-                    return;
+            string elementName = getSelectedText();
+            status = validateElementName(elementName);
+            if (status.errorOccured) {
+                showError(status.errorText);
+                return;
+            }
+
+            if ((procFile1 == null || procFile1.Length == 0)  &&
+                (procFile2 == null || procFile2.Length == 0)) {
+                status.errorOccured = true;
+                status.errorText = errorText[(int) ERRORS.ITSERR009];
+                showError(status.errorText);
+                return;
+            }
+
+            if (procFile1 != null && procFile1.Length > 0) {
+                procFiles = procFile1;
+                status = loadEltFrmFile(procFile1, elementName);
+                if (status.errorOccured) {
+                    if (status.errorNum != (int) ERRORS.ITSERR010) {
+                        showError(status.errorText);
+                        return;
+                    }
                 }
             }
 
+            if (procFile2 != null && procFile2.Length > 0) {
+                if (procFiles.Length == 0)
+                    procFiles = procFile2;
+                else
+                    procFiles += ", " + procFile2;
+
+                status = loadEltFrmFile(procFile2, elementName);
+                if (status.errorOccured) {
+                    if (status.errorNum != (int) ERRORS.ITSERR010) {
+                        showError(status.errorText);
+                        return;
+                    }
+                }
+            }
+
+            // The only error that will come here is Not Found.. 
+            if (status.errorOccured) {
+                status.errorText = string.Format(errorText[(int)ERRORS.ITSERR010], procFiles);
+                showError(status.errorText);
+                return;
+            }
+
+            if (!status.errorOccured)
+            {
+                // Set to Tab Color 2
+                Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_VIEW_TAB_COLOUR_2);
+            }
+
+
+            return;
+        }
+
+        static ITSStatus loadEltFrmFile(string pFileName, string pElementName) {
+            ITSStatus status = new ITSStatus();
+
+            string path = getFilePath(pFileName, pElementName);
+
+            if (!File.Exists(path)) {
+                status.errorOccured = true;
+                status.errorNum = 0;
+                status.errorText = string.Format(errorText[(int)ERRORS.ITSERR012], pFileName + "." + pElementName, path);
+                return status;
+            }
+
             // Open the proc file in a new window.
-            notepad.OpenFile(status.filePath);
+            notepad.OpenFile(path);
 
             // Set Proc Language to COBOL
             notepad.SetCurrentLanguage(LangType.L_COBOL);
@@ -247,14 +379,12 @@ namespace Kbg.Demo.Namespace
             // Set ReadOnly on the proc just loaded.
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_EDIT_SETREADONLY);
 
-            // Set to Tab Color 2
-            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_VIEW_TAB_COLOUR_2);
-
-            return;
+            return status;
         }
 
 
-        /*****************************************************************************************
+
+         /*****************************************************************************************
          * Load DMS Record                                                                       *
          * The user selects the record name in the program and then initiates the Load DMS       *
          * record plugin entry point (this function).                                            *
@@ -278,25 +408,14 @@ namespace Kbg.Demo.Namespace
          *****************************************************************************************/
         static void loadDMSSchemaRecord()
         {
-            // Get selection start and end positions.
-            // If selStr and selEnd are equal then there is no selection,
-            // just process the line the caret is on.
-            var strSel = editor.GetSelectionStart();
-            var endSel = editor.GetSelectionEnd();
+            ITSStatus status = new ITSStatus();
 
-            // Get line text and convert to char array
-            editor.SetTargetRange(strSel, endSel);
-            string recordName = editor.GetTargetText().Trim();
+            string recordName = getSelectedText();
 
-            // Proc name may be btwn 1-60 characters.
-            if (recordName.Length <= 0)
-            {
-                MessageBox.Show("Err LPC001 - No Selection for Proc Name"); 
-                return;
-            }
-            else if (recordName.Length > 60)
-            {
-                MessageBox.Show("Err LPC002 - Record Name: " + recordName + " is greater than 60 characters.");
+            status = validateRecordName(recordName);
+            if (status.errorOccured) {
+                status.errorOccured = true;
+                showError(status.errorText);
                 return;
             }
 
@@ -315,7 +434,9 @@ namespace Kbg.Demo.Namespace
                     schemaFile1 = settings.PSDschemaFile;
                     break;
                 default:
-                    MessageBox.Show("Err LPC003 - Environment not set. Please check Settings.");
+                    status.errorOccured = true;
+                    status.errorText = errorText[(int)ERRORS.ITSERR008];
+                    showError(status.errorText);
                     return;
             }
 
@@ -324,35 +445,27 @@ namespace Kbg.Demo.Namespace
             // periods or more than one period and error message is displayed.
             string[] fileName = schemaFile1.Split('.');
             if (fileName.Length != 2) {
-                MessageBox.Show("Err LPC003 - Schema File format error.  The format is: qualifier*filename.elementname[/version]");
+                status.errorOccured = true;
+                status.errorNum = (int) ERRORS.ITSERR013;
+                status.errorText = string.Format(errorText[status.errorNum], schemaFile1);
+                showError(status.errorText);
                 return;
             }
 
-            // Invoke DoesFileExist to verify the file name format and to check if the file exists.
-            // fileName[0] is the qualifier*file-name
-            // fileName[1] is the element-name[/version]
-            //
-            // ExistStatus is used to hold the status including if the file exists, if an error was displayed,
-            // and the formatted path. Example DA0*ABS-WMSLDM.S$PROC/WMS-LDMIP-0 would be transformed into
-            // something like this: U:\DA0\ABS-WMSLDM\S$PROC.WMS-LDMIP-0
-            // 
-            ExistStatus status = DoesFileExist("Schema File", fileName[0], fileName[1]);
-            if (!status.fileExists)
+            string path = getFilePath(fileName[0], fileName[1]);
+
+            if (!File.Exists(path))
             {
-                if (!status.msgSent) {
-                    if (status.filePath.Length > 0) {
-                        MessageBox.Show("Err LPC004 - File did not exist at path: ", status.filePath);
-                    } else {
-                        MessageBox.Show("Err LPC005 - Undefined error.", status.filePath);
-                    }
-                }
+                status.errorOccured = true;
+                status.errorNum = 0;
+                status.errorText = string.Format(errorText[(int)ERRORS.ITSERR012], fileName[0] + "." + fileName[1], path);
                 return;
             }
 
             // Schema file exists.  Open and Read.
 
             Int32 BufferSize = 512;
-            using (var fileStream = File.OpenRead(status.filePath))
+            using (var fileStream = File.OpenRead(path))
             using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize))
             {
                 string pattern = @"^ *01 *([a-zA-Z_0-9-]+)\. *$";
@@ -412,7 +525,7 @@ namespace Kbg.Demo.Namespace
                         // Set Proc Language to COBOL
                         notepad.SetCurrentLanguage(LangType.L_COBOL);
                         // Set to Tab Color 4
-                        Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_VIEW_TAB_COLOUR_4);
+                        Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_VIEW_TAB_COLOUR_3);
                     }
 
                     writeNPPLine(line);
@@ -420,57 +533,114 @@ namespace Kbg.Demo.Namespace
                 
                 // Specified record name was not found in the schema file. 
                 if (!recFound) {
-                    MessageBox.Show("Err LPC005 - DMS Record: " + recordName + " not found at path: " + status.filePath);
+                    MessageBox.Show("Err LPC005 - DMS Record: " + recordName + " not found at path: " + path);
                     return;
                 }
             }
         }
 
+        static string getSelectedText()
+        {
+            // Get selection start and end positions.
+            // If selStr and selEnd are equal then there is no selection,
+            // just process the line the caret is on.
+            var strSel = editor.GetSelectionStart();
+            var endSel = editor.GetSelectionEnd();
 
-        /*
-         * 
-         */
-        static ExistStatus DoesFileExist(string fileLabel, string programFileName, string elementName)
+            // Get line text and convert to char array
+            editor.SetTargetRange(strSel, endSel);
+            return editor.GetTargetText().Trim();
+        }
+
+        static ITSStatus validateFileName(string pFileName)
+        {
+            ITSStatus status = new ITSStatus();
+
+            if (pFileName == null || pFileName.Length == 0)
+            {
+                status.errorOccured = true;
+                status.errorNum = (int)ERRORS.ITSERR007;
+                status.errorText = string.Format(errorText[status.errorNum], pFileName);
+                return status;
+            }
+
+            string[] fileParts = pFileName.Split('*');
+            int numAsterisks = fileParts.Length - 1;
+            if (numAsterisks == 0)
+            {
+                status.errorOccured = true;
+                status.errorNum = (int)ERRORS.ITSERR005;
+                status.errorText = string.Format(errorText[status.errorNum], pFileName);
+                return status;
+            }
+            else if (numAsterisks > 1)
+            {
+                status.errorOccured = true;
+                status.errorNum = (int)ERRORS.ITSERR006;
+                status.errorText = string.Format(errorText[status.errorNum], pFileName);
+                return status;
+            }
+
+            status.errorOccured = false;
+            return status;
+
+        }
+
+        static ITSStatus validateElementName(string pElementName)
+        {
+            ITSStatus status = new ITSStatus();
+
+            if (pElementName == null || pElementName.Length == 0)
+            {
+                status.errorOccured = true;
+                status.errorNum = (int)ERRORS.ITSERR011;
+                status.errorText = string.Format(errorText[status.errorNum], pElementName);
+                return status;
+            }
+
+            status.errorOccured = false;
+            return status;
+
+        }
+
+        static ITSStatus validateRecordName(string pRecordName)
+        {
+            ITSStatus status = new ITSStatus();
+
+            if (pRecordName == null || pRecordName.Length == 0)
+            {
+                status.errorOccured = true;
+                status.errorNum = (int)ERRORS.ITSERR011;
+                status.errorText = string.Format(errorText[status.errorNum], pRecordName);
+                return status;
+            }
+
+            status.errorOccured = false;
+            return status;
+
+        }
+
+
+
+         static string getFilePath(string programFileName, string elementName)
         {
             string path = "";
 
-            ExistStatus status = new ExistStatus();
-            status.fileExists = false;
-            status.msgSent = false;
-            status.filePath = "";
-
-        // Need to validate File name
-        int numAsterisks = programFileName.Split('*').Length - 1;
-            if (numAsterisks == 0) {
-                MessageBox.Show("Err LPC004 - " + fileLabel + settings.DEVproc1File + " is missing qualifier.");
-                status.msgSent = true;
-                status.filePath = path;
-
-                return status;
-            }
-            else if (numAsterisks > 1) {
-                MessageBox.Show("Err LPC005 - " + fileLabel + settings.DEVproc1File + " has too many asterisks.");
-                status.msgSent = true;
-                status.filePath = path;
-                return status;
-            }
-
+            // Replace * in program file name with a back slash
             string pgmFileFmt = programFileName.Replace('*', '\\');
+
+            // Replace a forward slash with a "." to indicate extension (version in Unisys)
             string eltFileFmt = elementName.Replace('/', '.');
 
-            // Build path to procfile.
+            // Build path to file/element by adding the mapped drive letter.
             char driveLetter = (char)('A' + settings.mappedDrive);
             path = (driveLetter + ":") + "\\" + pgmFileFmt + "\\" + eltFileFmt;
 
-            if (!File.Exists(path)) {
-                status.filePath = path;
-                return status;
-            }
-            else {
-                status.fileExists = true;
-                status.filePath = path;
-                return status;
-            }
+            return path;
+        }
+
+        static void showError(string pErrorTxt) {
+            MessageBox.Show(pErrorTxt);
         }
 
         static void writeNPPLine(string pLine) {

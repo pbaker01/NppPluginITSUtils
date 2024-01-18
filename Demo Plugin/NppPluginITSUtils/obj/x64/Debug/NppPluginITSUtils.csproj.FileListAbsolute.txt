@@ -7,13 +7,13 @@ D:\Repos\NppPluginITSUtils\Demo Plugin\NppManagedPluginDemo\obj\x64\Debug\NppPlu
 D:\Repos\NppPluginITSUtils\Demo Plugin\NppManagedPluginDemo\obj\x64\Debug\NppPluginITSUtils.csproj.CoreCompileInputs.cache
 D:\Repos\NppPluginITSUtils\Demo Plugin\NppManagedPluginDemo\obj\x64\Debug\Demo.dll
 D:\Repos\NppPluginITSUtils\Demo Plugin\NppManagedPluginDemo\obj\x64\Debug\Demo.pdb
-D:\Repos\NppPluginITSUtils\Demo Plugin\NppPluginITSUtils\bin\Debug-x64\ITSPlugin.dll
-D:\Repos\NppPluginITSUtils\Demo Plugin\NppPluginITSUtils\bin\Debug-x64\ITSPlugin.pdb
 D:\Repos\NppPluginITSUtils\Demo Plugin\NppPluginITSUtils\obj\x64\Debug\NppPluginITSUtils.csproj.AssemblyReference.cache
 D:\Repos\NppPluginITSUtils\Demo Plugin\NppPluginITSUtils\obj\x64\Debug\NppPluginNET.Forms.Form1.resources
 D:\Repos\NppPluginITSUtils\Demo Plugin\NppPluginITSUtils\obj\x64\Debug\Kbg.Demo.Namespace.frmGoToLine.resources
 D:\Repos\NppPluginITSUtils\Demo Plugin\NppPluginITSUtils\obj\x64\Debug\NppPluginNET.Properties.Resources.resources
 D:\Repos\NppPluginITSUtils\Demo Plugin\NppPluginITSUtils\obj\x64\Debug\NppPluginITSUtils.csproj.GenerateResource.cache
 D:\Repos\NppPluginITSUtils\Demo Plugin\NppPluginITSUtils\obj\x64\Debug\NppPluginITSUtils.csproj.CoreCompileInputs.cache
+D:\Repos\NppPluginITSUtils\Demo Plugin\NppPluginITSUtils\bin\Debug-x64\ITSPlugin.dll
+D:\Repos\NppPluginITSUtils\Demo Plugin\NppPluginITSUtils\bin\Debug-x64\ITSPlugin.pdb
 D:\Repos\NppPluginITSUtils\Demo Plugin\NppPluginITSUtils\obj\x64\Debug\ITSPlugin.dll
 D:\Repos\NppPluginITSUtils\Demo Plugin\NppPluginITSUtils\obj\x64\Debug\ITSPlugin.pdb
