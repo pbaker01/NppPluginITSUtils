@@ -124,10 +124,17 @@ namespace Kbg.Demo.Namespace
 
         #region " Menu functions "
 
+        //  Display the settings dialog.
+        static void OpenSettings()
+        {
+            settings.ShowDialog("Settings for NY ITS NPP Plugin");
+        }
+
         /*
-        * This plugin iterates through the lines selected.
-        * If the line length is <= 6 the line is skipped.
-        * If the character at pos 7 is a space then set asterisk and vv.
+        * This function iterates through the lines selected and toggle the 
+        * comment character in column.  If the line length is <= 6 the 
+        * line is skipped. If the character at pos 7 is a space then
+        * set asterisk and vv.
         */
         static void toggleCobolComment()
         {
@@ -145,10 +152,10 @@ namespace Kbg.Demo.Namespace
             string lineText = "";
             char[] lineTextAsChars;
 
-            int lineLen = 0;
+            int lineLen;
 
-            int strPos = 0;
-            int endPos = 0;
+            int strPos;
+            int endPos;
 
             // Loop through each line and toggle the comment char "*"
             // in column 7.  Skip lines that are shorter than 7 characters.
@@ -173,8 +180,12 @@ namespace Kbg.Demo.Namespace
                 // Toggle comment character.
                 if (lineTextAsChars[6] == '*')
                     lineTextAsChars[6] = ' ';
-                else
+                else if (lineTextAsChars[6] == ' ')
                     lineTextAsChars[6] = '*';
+                else
+                    // The character in column 6 is not a space or asterisk.
+                    // Just skip this line. 
+                    continue;
 
                 // Convert char array back to string 
                 // and update line in editor. 
@@ -185,36 +196,30 @@ namespace Kbg.Demo.Namespace
             return;
         }
 
-        //  Display the settings dialog.
-        static void OpenSettings()
-        {
-            settings.ShowDialog("Settings for NY ITS NPP Plugin");
-        }
-
         static void loadEltFromWorkspace() {
-            ITSStatus itsStatus;
+            ITSStatus status;
 
             string fileName = settings.WorkSpaceSRCFile;
-            itsStatus = validateFileName(fileName);
-            if (itsStatus.errorOccured) {
-                showError(itsStatus.errorText);
+            status = validateFileName(fileName);
+            if (status.errorOccured) {
+                showError(status.errorText);
                 return;
             }
 
             string elementName = getSelectedText();
-            itsStatus = validateElementName(elementName);
-            if (itsStatus.errorOccured) {
-                showError(itsStatus.errorText);
+            status = validateElementName(elementName);
+            if (status.errorOccured) {
+                showError(status.errorText);
                 return;
             }
 
-            itsStatus = loadEltFrmFile(fileName, elementName);
-            if (itsStatus.errorOccured) {
-                showError(itsStatus.errorText);
+            status = loadEltFrmFile(fileName, elementName);
+            if (status.errorOccured) {
+                showError(status.errorText);
                 return;
             }
 
-            if (!itsStatus.errorOccured) {
+            if (!status.errorOccured) {
                 // Set to Tab Color 2
                 Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_VIEW_TAB_COLOUR_1);
             }
@@ -299,7 +304,6 @@ namespace Kbg.Demo.Namespace
                     showError(status.errorText);
                     return;
             }
-
             string elementName = getSelectedText();
             status = validateElementName(elementName);
             if (status.errorOccured) {
@@ -316,7 +320,13 @@ namespace Kbg.Demo.Namespace
             }
 
             if (procFile1 != null && procFile1.Length > 0) {
-                procFiles = procFile1;
+                procFiles = procFile1; // procFiles - needed for an error message
+                status = validateFileName(procFile1);
+                if (status.errorOccured) {
+                    showError(status.errorText);
+                    return;
+                }
+
                 status = loadEltFrmFile(procFile1, elementName);
                 if (status.errorOccured) {
                     if (status.errorNum != (int) ERRORS.ITSERR010) {
@@ -327,10 +337,18 @@ namespace Kbg.Demo.Namespace
             }
 
             if (procFile2 != null && procFile2.Length > 0) {
+                // procFiles is needed for error handling
                 if (procFiles.Length == 0)
                     procFiles = procFile2;
                 else
                     procFiles += ", " + procFile2;
+
+                status = validateFileName(procFile2);
+                if (status.errorOccured)
+                {
+                    showError(status.errorText);
+                    return;
+                }
 
                 status = loadEltFrmFile(procFile2, elementName);
                 if (status.errorOccured) {
@@ -365,8 +383,8 @@ namespace Kbg.Demo.Namespace
 
             if (!File.Exists(path)) {
                 status.errorOccured = true;
-                status.errorNum = 0;
-                status.errorText = string.Format(errorText[(int)ERRORS.ITSERR012], pFileName + "." + pElementName, path);
+                status.errorNum = (int) ERRORS.ITSERR012;
+                status.errorText = string.Format(errorText[status.errorNum], pFileName + "." + pElementName, path);
                 return status;
             }
 
@@ -438,6 +456,15 @@ namespace Kbg.Demo.Namespace
                     status.errorText = errorText[(int)ERRORS.ITSERR008];
                     showError(status.errorText);
                     return;
+            }
+
+            if (schemaFile1 == null || schemaFile1.Length == 0)
+            {
+                status.errorOccured = true;
+                status.errorNum = (int)ERRORS.ITSERR004;
+                status.errorText = errorText[status.errorNum];
+                    showError(status.errorText);
+                return;
             }
 
             // Seperate the qualifier and file name from the element name (and version)
