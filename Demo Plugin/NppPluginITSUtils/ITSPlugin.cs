@@ -108,10 +108,11 @@ namespace Kbg.Demo.Namespace
             PluginBase.SetCommand(1, "---", null);
             PluginBase.SetCommand(2, "Toggle COBOL Comment", toggleCobolComment);
             PluginBase.SetCommand(3, "---", null);
-            PluginBase.SetCommand(4, "View COBOL Proc", loadCOBOLProc);
-            PluginBase.SetCommand(5, "View DMS Schema Record", loadDMSSchemaRecord);
-            PluginBase.SetCommand(5, "View Program/Element from Lcl Workspace.", loadEltFromWorkspace);
-            PluginBase.SetCommand(5, "View Program/Element from Env SRC file.", loadEltFromSRCFile);
+            PluginBase.SetCommand(4, "View ACOB COBOL Proc", loadACOBCOBOLProc);
+            PluginBase.SetCommand(5, "View UCOB COBOL Proc", loadUCOBCOBOLProc);
+            PluginBase.SetCommand(6, "View DMS Schema Record", loadDMSSchemaRecord);
+            PluginBase.SetCommand(7, "View Program/Element from Lcl Workspace.", loadEltFromWorkspace);
+            PluginBase.SetCommand(8, "View Program/Element from Env SRC file.", loadEltFromSRCFile);
         }
 
         static internal void SetToolBarIcon()
@@ -272,31 +273,27 @@ namespace Kbg.Demo.Namespace
                 // Set to Tab Color 2
                 Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_VIEW_TAB_COLOUR_1);
             }
-
         }
 
-            static void loadCOBOLProc()
-        {
+        static void loadACOBCOBOLProc() {
             ITSStatus status = new ITSStatus();
 
             string procFile1;
             string procFile2;
 
-            string procFiles = "";   // Used for error reporting.. 
-
             switch (settings.workingEnvt)
             {
                 case ENVIRONMENT.Development:
-                    procFile1 = settings.DEVproc1File;
-                    procFile2 = settings.DEVproc2File;
+                    procFile1 = settings.DEVACOBproc1File;
+                    procFile2 = settings.DEVACOBproc2File;
                     break;
                 case ENVIRONMENT.UserTest:
-                    procFile1 = settings.TSTproc1File;
-                    procFile2 = settings.TSTproc2File;
+                    procFile1 = settings.TSTACOBproc1File;
+                    procFile2 = settings.TSTACOBproc2File;
                     break;
                 case ENVIRONMENT.Pseudo:
-                    procFile1 = settings.PSDproc1File;
-                    procFile2 = settings.PSDproc2File;
+                    procFile1 = settings.PSDACOBproc1File;
+                    procFile2 = settings.PSDACOBproc2File;
                     break;
                 default:
                     status.errorOccured = true;
@@ -304,6 +301,58 @@ namespace Kbg.Demo.Namespace
                     showError(status.errorText);
                     return;
             }
+
+            loadCOBOLProc(PROC_TYPE.ACOB_Proc, procFile1, procFile2);
+        }
+
+        static void loadUCOBCOBOLProc() {
+
+            ITSStatus status = new ITSStatus();
+
+            string procFile1 = "";
+            string procFile2 = "";
+
+            switch (settings.workingEnvt)
+            {
+                case ENVIRONMENT.Development:
+                    procFile1 = settings.DEVUCOBprocFile;
+                    break;
+                case ENVIRONMENT.UserTest:
+                    procFile1 = settings.TSTUCOBprocFile;
+                    break;
+                case ENVIRONMENT.Pseudo:
+                    procFile1 = settings.PSDUCOBprocFile;
+                    break;
+                default:
+                    status.errorOccured = true;
+                    status.errorText = errorText[(int)ERRORS.ITSERR008];
+                    showError(status.errorText);
+                    return;
+            }
+
+            loadCOBOLProc(PROC_TYPE.UCOB_Proc, procFile1, procFile2);
+        }
+
+        static void loadSystemProc()
+        {
+
+            // ITSStatus status = new ITSStatus(); not needed just now.. 
+
+            string procFile1 = "";
+            string procFile2 = "";
+
+            procFile1 = settings.systemProcFile;
+
+            loadCOBOLProc(PROC_TYPE.System_Proc, procFile1, procFile2);
+        }
+
+
+
+        static void loadCOBOLProc(PROC_TYPE procType, string procFile1, string procFile2) {
+            ITSStatus status = new ITSStatus();
+
+            string procFiles = "";   // Used for error reporting.. 
+
             string elementName = getSelectedText();
             status = validateElementName(elementName);
             if (status.errorOccured) {
@@ -314,7 +363,23 @@ namespace Kbg.Demo.Namespace
             if ((procFile1 == null || procFile1.Length == 0)  &&
                 (procFile2 == null || procFile2.Length == 0)) {
                 status.errorOccured = true;
-                status.errorText = errorText[(int) ERRORS.ITSERR009];
+
+                switch (procType)
+                {
+                    case PROC_TYPE.ACOB_Proc:
+                        status.errorNum = (int)ERRORS.ITSERR009;
+                        break;
+                    case PROC_TYPE.UCOB_Proc:
+                        status.errorNum = (int)ERRORS.ITSERR014;
+                        break;
+                    case PROC_TYPE.System_Proc:
+                        status.errorNum = (int)ERRORS.ITSERR015;
+                        break;
+                    default:
+                        break;
+                }
+
+                status.errorText = errorText[(int) status.errorNum];
                 showError(status.errorText);
                 return;
             }

@@ -9,15 +9,20 @@ namespace ITS.Utils
 {
     public static class ITSENums
     {
-        public enum ENVIRONMENT
-        {
+        public enum ENVIRONMENT {
             Development = 0,
             UserTest = 1,
             Pseudo = 2
         }
 
-        public enum MAPPED_DRIVE
-        {
+        public enum PROC_TYPE {
+            ACOB_Proc = 0,
+            UCOB_Proc = 1,
+            System_Proc = 2
+        }
+
+
+        public enum MAPPED_DRIVE {
             [Description("A:")] A = 0,
             B = A+1,
             C = B+1,

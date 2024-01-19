@@ -20,7 +20,7 @@ namespace CsvQuery.PluginInfrastructure
     public class SettingsBase
     {
         private const int DEFAULT_WIDTH = 600;
-        private const int DEFAULT_HEIGHT = 500;
+        private const int DEFAULT_HEIGHT = 600;
 
         static INotepadPPGateway notepad = new NotepadPPGateway();
 
