@@ -60,7 +60,7 @@ namespace JSON_Tools.Utils
         public string DEVACOBproc2File { get; set; }
 
         [Description("Schema - Schema file name (qual*file.element[/version]) - Example, \r\n" +
-                     "qqq*fff.S$PROC/WMS-LDMIP-0"),
+                     "qqq*fff.S$PROC/version"),
             Category("2-Development Environment"), DefaultValue("")]
         public string DEVschemaFile { get; set; }
 
@@ -86,7 +86,7 @@ namespace JSON_Tools.Utils
         public string TSTACOBproc2File { get; set; }
 
         [Description("Schema - Schema file name (qual*file.element[/version]), Example: \r\n" +
-                     "qqq*fff.S$PROC/WMS-LDMIP-0"),
+                     "qqq*fff.S$PROC/version"),
             Category("3-User Test Environment"), DefaultValue("")]
         public string TSTschemaFile { get; set; }
         #endregion
@@ -109,7 +109,7 @@ namespace JSON_Tools.Utils
         public string PSDACOBproc2File { get; set; }
 
         [Description("Schema - Schema file name (qual*file.element[/version]), Example: \r\n" +
-                     "qqq*fff.S$PROC/WMS-LDMIP-0"),
+                     "qqq*fff.S$PROC/version"),
             Category("4-Pseudo Environment"), DefaultValue("")]
         public string PSDschemaFile { get; set; }
 
