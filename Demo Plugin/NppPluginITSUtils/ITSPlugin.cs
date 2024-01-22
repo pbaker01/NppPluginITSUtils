@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using static ITS.Utils.ITSENums;
 using static ITS.Utils.ITSConstants;
+using static System.Windows.Forms.LinkLabel;
 
 namespace Kbg.NppPluginNET
 {
@@ -69,7 +70,7 @@ namespace Kbg.Demo.Namespace
         static string COBP_VERSION = "COBP";
         static char FORWARD_SLASH = '/';
         static char HASH_CHAR = '#';
-        static char EQUALS_CHAR = '+';
+        static char EQUALS_CHAR = '=';
         static char ASTERISK_CHAR = '*';
         static char PERIOD = '.';
 
@@ -88,7 +89,7 @@ namespace Kbg.Demo.Namespace
         }
 
         static bool SET_READ_ONLY = true;
-        static bool DO_NOT_SET_READ_ONLY = false;
+        static bool DO_NOT_SET_READ_ONLY = !SET_READ_ONLY;
 
         static string ALIAS_FILE_NAME = "aliasEltName.ini";
 
@@ -131,16 +132,18 @@ namespace Kbg.Demo.Namespace
             //            bool check0nInit                      // optional. Make this menu item be checked visually
             //            );
             PluginBase.SetCommand(0, "Settings", OpenSettings);
+            PluginBase.SetCommand(0, "Edit Alias File", EditAliasFile);
             PluginBase.SetCommand(1, "---", null);
-            PluginBase.SetCommand(2, "Toggle COBOL Comment", toggleCobolComment);
+            PluginBase.SetCommand(2, "Toggle COBOL Comment", toggleCobolComment, new ShortcutKey(true, true, true, Keys.C));
             PluginBase.SetCommand(3, "---", null);
-            PluginBase.SetCommand(4, "View ACOB COBOL Proc",   loadACOBCOBOLProc);
-            PluginBase.SetCommand(5, "View UCOB COBOL Proc",   loadUCOBCOBOLProc);
-            PluginBase.SetCommand(6, "View System Proc (DPS)", loadSystemProc);
-            PluginBase.SetCommand(7, "View DMS Schema Record", loadDMSSchemaRecord);
+            PluginBase.SetCommand(4, "View ACOB COBOL Proc",   loadACOBCOBOLProc, new ShortcutKey(true, true, true, Keys.A));
+            PluginBase.SetCommand(5, "View UCOB COBOL Proc",   loadUCOBCOBOLProc, new ShortcutKey(true, true, true, Keys.U));
+            PluginBase.SetCommand(6, "View System Proc (DPS)", loadSystemProc, new ShortcutKey(true, true, true, Keys.S));
             PluginBase.SetCommand(8, "---", null);
-            PluginBase.SetCommand(9, "View Program/Element from Lcl Workspace.", loadEltFromWorkspace);
-            PluginBase.SetCommand(10, "View Program/Element from Env SRC file.", loadEltFromSRCFile);
+            PluginBase.SetCommand(7, "View DMS Schema Record", loadDMSSchemaRecord, new ShortcutKey(true, true, true, Keys.D));
+            PluginBase.SetCommand(8, "---", null);
+            PluginBase.SetCommand(9, "View Program/Element from Lcl Workspace.", loadEltFromWorkspace, new ShortcutKey(true, true, true, Keys.W));
+            PluginBase.SetCommand(10, "View Program/Element from Env SRC file.", loadEltFromSRCFile, new ShortcutKey(true, true, true, Keys.F));
         }
 
         static internal void SetToolBarIcon()
@@ -157,6 +160,34 @@ namespace Kbg.Demo.Namespace
         //  Allows user to configure required file names. 
         static void OpenSettings() {
             settings.ShowDialog("Settings for NY ITS NPP Plugin");
+        }
+
+        //  Display the settings dialog.
+        //  Allows user to configure required file names. 
+        static void EditAliasFile() {
+
+            string path = notepad.GetNppPath();
+            path = path + ALIAS_FILE_NAME;
+
+            if (!File.Exists(path)) {
+
+                try {
+                    // Create the file, or overwrite if the file exists.
+                    using (FileStream fs = File.Create(path)) {
+                        byte[] info = new UTF8Encoding(true).GetBytes("# Enter Key = Value pairs.");
+                        // Add some information to the file.
+                        fs.Write(info, 0, info.Length);
+                        info = new UTF8Encoding(true).GetBytes("# key = selected text, value = element name (with /version.");
+                        // Add some more information to the file.
+                        fs.Write(info, 0, info.Length);
+                    }
+                }
+                catch (Exception ex) {
+                    Console.WriteLine(ex.ToString());
+                }   
+            }
+
+            notepad.OpenFile(path);
         }
 
         /*
@@ -329,7 +360,8 @@ namespace Kbg.Demo.Namespace
                     break;
                 default:
                     status.errorOccured = true;
-                    status.errorText = errorText[(int)ERRORS.ITSERR008];
+                    status.errorNum = (int) ERRORS.ITSERR008;
+                    status.errorText = errorText[status.errorNum];
                     showError(status.errorText);
                     return;
             }
@@ -357,7 +389,8 @@ namespace Kbg.Demo.Namespace
                     break;
                 default:
                     status.errorOccured = true;
-                    status.errorText = errorText[(int)ERRORS.ITSERR008];
+                    status.errorNum = (int)ERRORS.ITSERR008;
+                    status.errorText = errorText[status.errorNum];
                     showError(status.errorText);
                     return;
             }
@@ -570,7 +603,7 @@ namespace Kbg.Demo.Namespace
         *                                                                                       *
         *                                                                                       *
         *****************************************************************************************/
-        static void loadDMSSchemaRecord()
+        static void loadDMSSchemaRecord_old()
         {
             ITSStatus status = new ITSStatus();
 
@@ -604,6 +637,7 @@ namespace Kbg.Demo.Namespace
                     return;
             }
 
+            // Display message if scheama file is not set for selected envt
             if (schemaFile1 == null || schemaFile1.Length == 0)
             {
                 status.errorOccured = true;
@@ -627,88 +661,238 @@ namespace Kbg.Demo.Namespace
 
             string path = getFilePath(fileName[0], fileName[1]);
 
-            if (!File.Exists(path))
-            {
+            if (!File.Exists(path)) {
                 status.errorOccured = true;
-                status.errorNum = 0;
-                status.errorText = string.Format(errorText[(int)ERRORS.ITSERR012], fileName[0] + "." + fileName[1], path);
+                status.errorNum = (int)ERRORS.ITSERR012;
+                status.errorText = string.Format(errorText[status.errorNum], fileName[0] + PERIOD + fileName[1], path);
+                showError(status.errorText);
                 return;
             }
 
             // Schema file exists.  Open and Read.
 
-            Int32 BufferSize = 512;
+            Int32 BufferSize = 1028;
             using (var fileStream = File.OpenRead(path))
             using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize))
             {
-                string pattern = @"^ *01 *([a-zA-Z_0-9-]+)\. *$";
+                string pattern = @"^ *RECORD NAME IS ([a-zA-Z_-]+) *$";
                 Regex r = new Regex(pattern, RegexOptions.IgnoreCase);
 
-                bool editorOpen = false;
                 bool eof = false;
 
                 string line;
                 bool recFound = false;
+                // Loop through DMS Schema File
                 while (!eof)
                 {
+                    // Get next line
                     line = streamReader.ReadLine();
+                    if (line == null) {
+                        eof = true;
+                        if (recFound) {
+                            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_EDIT_SETREADONLY);
+                            editor.GotoLine(0);
+                            editor.GrabFocus();
+                        }
+                        continue;
+                    }
+
+                    // If the record has been found determine at begining of a new record. 
+                    if (recFound) {
+                        // Begining of new record?
+                        if (r.Match(line).Success) {
+
+                            // Set ReadOnly on the new file just opened.
+                            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_EDIT_SETREADONLY);
+                            editor.GotoLine(0);
+                            editor.GrabFocus();
+                            eof = true;
+                            continue;
+                        }
+                        else {
+                            writeNPPLine(line);
+                            continue;
+                        }
+                    } else {
+                        // Record has not been found yet.. 
+
+                        // Is this the begining of the requested record?
+                        Match m = r.Match(line);
+                        if (!m.Success) {
+                            // Not a match... Keep looking.
+                            continue;
+                        }
+
+
+                        Group g = m.Groups[1];
+                        CaptureCollection cc = g.Captures;
+                        Capture c = cc[0];
+
+                        // If it does not match, skip and get next line. 
+                        if (!c.ToString().Equals(recordName)) {
+                            continue;
+                        }
+
+                        // *** DMS RECORD FOUND ***
+
+                        // Start of DMS record found.  Create a new file in NPP, set language to COBOL
+                        // and set the tab color to Orange. 
+                        recFound = true;
+                        notepad.FileNew();
+                        // Set Proc Language to COBOL
+                        notepad.SetCurrentLanguage(LangType.L_COBOL);
+                        // Cursor to home
+                        // Set to Tab Color 4
+                        Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_VIEW_TAB_COLOUR_3);
+
+                        writeNPPLine(line);
+                    }
+                }
+
+                // Specified record name was not found in the schema file. 
+                if (!recFound) {
+                    status.errorOccured = true;
+                    status.errorNum = (int) ERRORS.ITSERR016;
+                    status.errorText = string.Format(errorText[status.errorNum], fileName[0] + PERIOD + fileName[1], path);
+                    showError(status.errorText);
+                    return;
+                }
+                return;
+
+            }
+        }
+        static void loadDMSSchemaRecord() {
+            ITSStatus status = new ITSStatus();
+
+            string recordName = getSelectedText();
+
+            status = validateRecordName(recordName);
+            if (status.errorOccured) {
+                status.errorOccured = true;
+                showError(status.errorText);
+                return;
+            }
+
+            // Get the schema file name based on the environment selected 
+            // in the settings. 
+            string schemaFile1 = "";
+            switch (settings.workingEnvt) {
+                case ENVIRONMENT.Development:
+                    schemaFile1 = settings.DEVschemaFile;
+                    break;
+                case ENVIRONMENT.UserTest:
+                    schemaFile1 = settings.TSTschemaFile;
+                    break;
+                case ENVIRONMENT.Pseudo:
+                    schemaFile1 = settings.PSDschemaFile;
+                    break;
+                default:
+                    status.errorOccured = true;
+                    status.errorText = errorText[(int)ERRORS.ITSERR008];
+                    showError(status.errorText);
+                    return;
+            }
+
+            // Display message if scheama file is not set for selected envt
+            if (schemaFile1 == null || schemaFile1.Length == 0) {
+                status.errorOccured = true;
+                status.errorNum = (int)ERRORS.ITSERR004;
+                status.errorText = errorText[status.errorNum];
+                showError(status.errorText);
+                return;
+            }
+
+            // Seperate the qualifier and file name from the element name (and version)
+            // This is done by spliting the file name on the period. If there are no
+            // periods or more than one period and error message is displayed.
+            string[] fileName = schemaFile1.Split(PERIOD);
+            if (fileName.Length != 2) {
+                status.errorOccured = true;
+                status.errorNum = (int)ERRORS.ITSERR013;
+                status.errorText = string.Format(errorText[status.errorNum], schemaFile1);
+                showError(status.errorText);
+                return;
+            }
+
+            string path = getFilePath(fileName[0], fileName[1]);
+
+            if (!File.Exists(path)) {
+                status.errorOccured = true;
+                status.errorNum = (int)ERRORS.ITSERR012;
+                status.errorText = string.Format(errorText[status.errorNum], fileName[0] + PERIOD + fileName[1], path);
+                showError(status.errorText);
+                return;
+            }
+
+            // Schema file exists.  Open and Read.
+
+            Int32 BufferSize = 1028;
+            using (var fileStream = File.OpenRead(path))
+            using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize)) {
+                string pattern = @"^ *RECORD NAME IS ([a-zA-Z_-]+) *$";
+                Regex r = new Regex(pattern, RegexOptions.IgnoreCase);
+
+                bool eof = false;
+
+                string line;
+                bool recFound = false;
+                // Loop through DMS Schema File
+                int lineNum = 0;
+                while (!eof) {
+                    // Get next line
+                    line = streamReader.ReadLine();
+                    lineNum += 1;
                     if (line == null) {
                         eof = true;
                         continue;
                     }
 
-                    // I'll get dinged for this.. 
-                    if (recFound)
-                    {
-                        if (line.Trim().Equals("END"))
-                        {
-                            eof = true;
-
-                            // Set ReadOnly on the proc just loaded.
-                            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_EDIT_SETREADONLY);
-
+                    // If the record has been found determine at begining of a new record. 
+                    if (!recFound) {
+                        // Is this the begining of the requested record?
+                        Match m = r.Match(line);
+                        if (!m.Success) {
+                            // Not a match... Keep looking.
                             continue;
                         }
-                        writeNPPLine(line);
-                    }
 
-                    // This code is only executed when the start line has not been found.
+                        Group g = m.Groups[1];
+                        CaptureCollection cc = g.Captures;
+                        Capture c = cc[0];
 
-                    Match m = r.Match(line);
-                    if (!m.Success) {
-                        continue;
-                    }
+                        // If it does not match, skip and get next line. 
+                        if (!c.ToString().Equals(recordName)) {
+                            continue;
+                        }
 
-                    Group g = m.Groups[1];
-                    CaptureCollection cc = g.Captures;
-                    Capture c = cc[0];
-                    
-                    if (!c.ToString().Equals(recordName)) {
-                        continue;
-                    }
+                        // *** DMS RECORD FOUND *** 
 
-                    // *** DMS RECORD FOUND ***
-
-                    // Start of DMS record found.  Create a new file in NPP, set language to COBOL
-                    // and set the tab color to Orange. 
-                    recFound = true;
-                    if (!editorOpen) {
-                        notepad.FileNew();
-                        editorOpen = true;
+                        // Start of DMS record found.  Create a new file in NPP, set language to COBOL
+                        // and set the tab color to Orange. 
+                        recFound = true;
+                        eof = true;
+                        notepad.OpenFile(path);
                         // Set Proc Language to COBOL
                         notepad.SetCurrentLanguage(LangType.L_COBOL);
+                        // Display line number where record found. 
+                        editor.SetFirstVisibleLine(lineNum - 1);
+                        // Set read only    
+                        Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_EDIT_SETREADONLY);
                         // Set to Tab Color 4
                         Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_VIEW_TAB_COLOUR_3);
                     }
-
-                    writeNPPLine(line);
                 }
-                
+
                 // Specified record name was not found in the schema file. 
                 if (!recFound) {
-                    MessageBox.Show("Err LPC005 - DMS Record: " + recordName + " not found at path: " + path);
+                    status.errorOccured = true;
+                    status.errorNum = (int)ERRORS.ITSERR016;
+                    status.errorText = string.Format(errorText[status.errorNum], fileName[0] + PERIOD + fileName[1], path);
+                    showError(status.errorText);
                     return;
                 }
+                return;
+
             }
         }
 
@@ -874,11 +1058,14 @@ namespace Kbg.Demo.Namespace
 
             editor.NewLine();
 
-            int strPos = editor.PositionFromLine(lineNum);
-            int endPos = editor.GetLineEndPosition(lineNum);
+            if (pLine != null && pLine != "") {
 
-            editor.SetTargetRange(strPos, endPos);
-            editor.ReplaceTarget(pLine.Length, pLine);
+                int strPos = editor.PositionFromLine(lineNum);
+                int endPos = editor.GetLineEndPosition(lineNum);
+
+                editor.SetTargetRange(strPos, endPos);
+                editor.ReplaceTarget(pLine.Length, pLine);
+            }
         }
 
 

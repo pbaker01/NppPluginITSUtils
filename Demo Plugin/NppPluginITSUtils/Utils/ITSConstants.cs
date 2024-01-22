@@ -38,7 +38,7 @@ namespace ITS.Utils {
             "ERR013 - Check settings - Schema File format error. File: {0}",
             "ERR014 - Check settings - UCOB Proc File is not specified for the selected environment.",
             "ERR015 - Check settings - System Proc File is not specified.",
-            "ERR016 - Text",
+            "ERR016 - DMS Record was not found in: {0} using path: {1}",
             "ERR017 - Text",
             "ERR018 - Text",
             "ERR019 - Text",
