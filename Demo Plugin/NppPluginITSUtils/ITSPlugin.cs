@@ -68,11 +68,12 @@ namespace Kbg.Demo.Namespace
         static string iniFilePath = null;
         static string SCREEN_PREFIX = "SCREEN-";
         static string COBP_VERSION = "COBP";
-        static char FORWARD_SLASH = '/';
+        static char FWD_SLASH_CHAR = '/';
         static char HASH_CHAR = '#';
         static char EQUALS_CHAR = '=';
         static char ASTERISK_CHAR = '*';
-        static char PERIOD = '.';
+        static char PERIOD_CHAR = '.';
+        static string PERIOD_STRING = PERIOD_CHAR.ToString();
 
         // general stuff things
         public static JSON_Tools.Utils.Settings settings = new JSON_Tools.Utils.Settings();
@@ -435,10 +436,10 @@ namespace Kbg.Demo.Namespace
 
             // Check if requesting a DPS screen.
             if (procType == PROC_TYPE.ACOB_Proc || procType == PROC_TYPE.UCOB_Proc) {
-                if (elementName.StartsWith(SCREEN_PREFIX) && (!elementName.Contains(FORWARD_SLASH.ToString()))) {
+                if (elementName.StartsWith(SCREEN_PREFIX) && (!elementName.Contains(FWD_SLASH_CHAR.ToString()))) {
                     string[] elementNamePart = elementName.Split('-');
                     if (elementName.Length > 2) {
-                        elementName = elementNamePart[0] + "-" + elementNamePart[elementNamePart.Length - 1] + FORWARD_SLASH + COBP_VERSION;
+                        elementName = elementNamePart[0] + "-" + elementNamePart[elementNamePart.Length - 1] + FWD_SLASH_CHAR + COBP_VERSION;
                     }
                 }
             }
@@ -446,8 +447,8 @@ namespace Kbg.Demo.Namespace
             // DPS Procs can have a version name like /COBP 
             if (procType == PROC_TYPE.System_Proc) {
                 // If there is no fwd slash then concatenate "/COBP" to elemenent name. 
-                if (!elementName.Contains(FORWARD_SLASH.ToString())) {
-                    elementName = elementName + FORWARD_SLASH + COBP_VERSION;
+                if (!elementName.Contains(FWD_SLASH_CHAR.ToString())) {
+                    elementName = elementName + FWD_SLASH_CHAR + COBP_VERSION;
                 }
             }
 
@@ -546,23 +547,23 @@ namespace Kbg.Demo.Namespace
 
             if (!File.Exists(path)) {
                 // Remove version (i.e. Sys Proc routine adds /COBP)
-                int fwdSlashIdx = elementName.IndexOf(FORWARD_SLASH); // Remove version
+                int fwdSlashIdx = elementName.IndexOf(FWD_SLASH_CHAR); // Remove version
                 if (fwdSlashIdx > 0)
                     elementName = elementName.Substring(0, fwdSlashIdx);
                 string alias = getAliasEltName(elementName);
                 if (alias != null && alias.Length > 0) {
-                    elementName = alias.Replace(FORWARD_SLASH, PERIOD).Trim();
+                    elementName = alias.Replace(FWD_SLASH_CHAR, PERIOD_CHAR).Trim();
                     path = getFilePath(pFileName, elementName);
                     if (!File.Exists(path)) {
                         status.errorOccured = true;
                         status.errorNum = (int)ERRORS.ITSERR012;
-                        status.errorText = string.Format(errorText[status.errorNum], pFileName + PERIOD + elementName, path);
+                        status.errorText = string.Format(errorText[status.errorNum], pFileName + PERIOD_CHAR + elementName, path);
                         return status;
                     }
                 } else {
                     status.errorOccured = true;
                     status.errorNum = (int)ERRORS.ITSERR012;
-                    status.errorText = string.Format(errorText[status.errorNum], pFileName + PERIOD + elementName, path);
+                    status.errorText = string.Format(errorText[status.errorNum], pFileName + PERIOD_CHAR + elementName, path);
                     return status;
                 }
             }
@@ -582,189 +583,14 @@ namespace Kbg.Demo.Namespace
         }
 
         /*****************************************************************************************
-        * Load DMS Record                                                                       *
-        * The user selects the record name in the program and then initiates the Load DMS       *
-        * record plugin entry point (this function).                                            *
-        *                                                                                       *
-        * The following steps are performed:                                                    *
-        *   1. Get the text selected. This text represents the DMS record name.                 *
-        *   2. The record name is validated. It must be from 1 to 60 characters                 *
-        *   3. Get the Unisys schema file name from settings (user config).                     *
-        *      o - Get schema file name using the selected environment.                         *
-        *      o - The file name consists of a file qualifier file name and element name.       *
-        *          Example: qualifier*program-file.element-name[/ version]                      *
-        *          i.e. DA0*ABS-WMSLDM.S$PROC/WMS-LDMIP-0                                       *
-        *   4. The file name is validated.                                                      *
-        *      o - Check format. (No edits are performed when the settings are added.)          *
-        *                                                                                       *
-        *                                                                                       *
-        *                                                                                       *
-        *                                                                                       *
-        *                                                                                       *
-        *                                                                                       *
-        *****************************************************************************************/
-        static void loadDMSSchemaRecord_old()
-        {
-            ITSStatus status = new ITSStatus();
-
-            string recordName = getSelectedText();
-
-            status = validateRecordName(recordName);
-            if (status.errorOccured) {
-                status.errorOccured = true;
-                showError(status.errorText);
-                return;
-            }
-
-            // Get the schema file name based on the environment selected 
-            // in the settings. 
-            string schemaFile1 = "";
-            switch (settings.workingEnvt)
-            {
-                case ENVIRONMENT.Development:
-                    schemaFile1 = settings.DEVschemaFile;
-                    break;
-                case ENVIRONMENT.UserTest:
-                    schemaFile1 = settings.TSTschemaFile;
-                    break;
-                case ENVIRONMENT.Pseudo:
-                    schemaFile1 = settings.PSDschemaFile;
-                    break;
-                default:
-                    status.errorOccured = true;
-                    status.errorText = errorText[(int)ERRORS.ITSERR008];
-                    showError(status.errorText);
-                    return;
-            }
-
-            // Display message if scheama file is not set for selected envt
-            if (schemaFile1 == null || schemaFile1.Length == 0)
-            {
-                status.errorOccured = true;
-                status.errorNum = (int)ERRORS.ITSERR004;
-                status.errorText = errorText[status.errorNum];
-                    showError(status.errorText);
-                return;
-            }
-
-            // Seperate the qualifier and file name from the element name (and version)
-            // This is done by spliting the file name on the period. If there are no
-            // periods or more than one period and error message is displayed.
-            string[] fileName = schemaFile1.Split(PERIOD);
-            if (fileName.Length != 2) {
-                status.errorOccured = true;
-                status.errorNum = (int) ERRORS.ITSERR013;
-                status.errorText = string.Format(errorText[status.errorNum], schemaFile1);
-                showError(status.errorText);
-                return;
-            }
-
-            string path = getFilePath(fileName[0], fileName[1]);
-
-            if (!File.Exists(path)) {
-                status.errorOccured = true;
-                status.errorNum = (int)ERRORS.ITSERR012;
-                status.errorText = string.Format(errorText[status.errorNum], fileName[0] + PERIOD + fileName[1], path);
-                showError(status.errorText);
-                return;
-            }
-
-            // Schema file exists.  Open and Read.
-
-            Int32 BufferSize = 1028;
-            using (var fileStream = File.OpenRead(path))
-            using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize))
-            {
-                string pattern = @"^ *RECORD NAME IS ([a-zA-Z_-]+) *$";
-                Regex r = new Regex(pattern, RegexOptions.IgnoreCase);
-
-                bool eof = false;
-
-                string line;
-                bool recFound = false;
-                // Loop through DMS Schema File
-                while (!eof)
-                {
-                    // Get next line
-                    line = streamReader.ReadLine();
-                    if (line == null) {
-                        eof = true;
-                        if (recFound) {
-                            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_EDIT_SETREADONLY);
-                            editor.GotoLine(0);
-                            editor.GrabFocus();
-                        }
-                        continue;
-                    }
-
-                    // If the record has been found determine at begining of a new record. 
-                    if (recFound) {
-                        // Begining of new record?
-                        if (r.Match(line).Success) {
-
-                            // Set ReadOnly on the new file just opened.
-                            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_EDIT_SETREADONLY);
-                            editor.GotoLine(0);
-                            editor.GrabFocus();
-                            eof = true;
-                            continue;
-                        }
-                        else {
-                            writeNPPLine(line);
-                            continue;
-                        }
-                    } else {
-                        // Record has not been found yet.. 
-
-                        // Is this the begining of the requested record?
-                        Match m = r.Match(line);
-                        if (!m.Success) {
-                            // Not a match... Keep looking.
-                            continue;
-                        }
-
-
-                        Group g = m.Groups[1];
-                        CaptureCollection cc = g.Captures;
-                        Capture c = cc[0];
-
-                        // If it does not match, skip and get next line. 
-                        if (!c.ToString().Equals(recordName)) {
-                            continue;
-                        }
-
-                        // *** DMS RECORD FOUND ***
-
-                        // Start of DMS record found.  Create a new file in NPP, set language to COBOL
-                        // and set the tab color to Orange. 
-                        recFound = true;
-                        notepad.FileNew();
-                        // Set Proc Language to COBOL
-                        notepad.SetCurrentLanguage(LangType.L_COBOL);
-                        // Cursor to home
-                        // Set to Tab Color 4
-                        Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_VIEW_TAB_COLOUR_3);
-
-                        writeNPPLine(line);
-                    }
-                }
-
-                // Specified record name was not found in the schema file. 
-                if (!recFound) {
-                    status.errorOccured = true;
-                    status.errorNum = (int) ERRORS.ITSERR016;
-                    status.errorText = string.Format(errorText[status.errorNum], fileName[0] + PERIOD + fileName[1], path);
-                    showError(status.errorText);
-                    return;
-                }
-                return;
-
-            }
-        }
+        * Load DMS Record                                                                       
+        * The user selects the record name in the program and then initiates the Load DMS       
+        * record plugin entry point (this function).                                            
+        ******************************************************************************************/ 
         static void loadDMSSchemaRecord() {
             ITSStatus status = new ITSStatus();
 
-            string recordName = getSelectedText();
+            string recordName = getSelectedText().ToUpper();
 
             status = validateRecordName(recordName);
             if (status.errorOccured) {
@@ -775,7 +601,7 @@ namespace Kbg.Demo.Namespace
 
             // Get the schema file name based on the environment selected 
             // in the settings. 
-            string schemaFile1 = "";
+            string schemaFile1;
             switch (settings.workingEnvt) {
                 case ENVIRONMENT.Development:
                     schemaFile1 = settings.DEVschemaFile;
@@ -805,7 +631,7 @@ namespace Kbg.Demo.Namespace
             // Seperate the qualifier and file name from the element name (and version)
             // This is done by spliting the file name on the period. If there are no
             // periods or more than one period and error message is displayed.
-            string[] fileName = schemaFile1.Split(PERIOD);
+            string[] fileName = schemaFile1.Split(PERIOD_CHAR);
             if (fileName.Length != 2) {
                 status.errorOccured = true;
                 status.errorNum = (int)ERRORS.ITSERR013;
@@ -819,7 +645,7 @@ namespace Kbg.Demo.Namespace
             if (!File.Exists(path)) {
                 status.errorOccured = true;
                 status.errorNum = (int)ERRORS.ITSERR012;
-                status.errorText = string.Format(errorText[status.errorNum], fileName[0] + PERIOD + fileName[1], path);
+                status.errorText = string.Format(errorText[status.errorNum], fileName[0] + PERIOD_CHAR + fileName[1], path);
                 showError(status.errorText);
                 return;
             }
@@ -861,7 +687,7 @@ namespace Kbg.Demo.Namespace
                         Capture c = cc[0];
 
                         // If it does not match, skip and get next line. 
-                        if (!c.ToString().Equals(recordName)) {
+                        if (!c.ToString().ToUpper().Equals(recordName)) {
                             continue;
                         }
 
@@ -887,12 +713,11 @@ namespace Kbg.Demo.Namespace
                 if (!recFound) {
                     status.errorOccured = true;
                     status.errorNum = (int)ERRORS.ITSERR016;
-                    status.errorText = string.Format(errorText[status.errorNum], fileName[0] + PERIOD + fileName[1], path);
+                    status.errorText = string.Format(errorText[status.errorNum], fileName[0] + PERIOD_CHAR + fileName[1], path);
                     showError(status.errorText);
                     return;
                 }
                 return;
-
             }
         }
 
@@ -906,7 +731,13 @@ namespace Kbg.Demo.Namespace
 
             // Get line text and convert to char array
             editor.SetTargetRange(strSel, endSel);
-            return editor.GetTargetText().Trim();
+            string selectedText = editor.GetTargetText().Trim();
+            // Make friendly allow period to be included... just truncate. 
+            // If there are two periods at the end or other garbage.. Ignored for now. 
+            if (selectedText.Length > 1 && selectedText.EndsWith(PERIOD_STRING)) { 
+                selectedText = selectedText.Substring(0, selectedText.Length - 1);
+            }
+            return selectedText;
         }
 
         static ITSStatus validateFileName(string pFileName)
@@ -986,7 +817,7 @@ namespace Kbg.Demo.Namespace
             string pgmFileFmt = programFileName.Replace(ASTERISK_CHAR, '\\'); 
 
             // Replace a forward slash with a "." to indicate extension (version in Unisys)
-            string eltFileFmt = elementName.Replace(FORWARD_SLASH, PERIOD);
+            string eltFileFmt = elementName.Replace(FWD_SLASH_CHAR, PERIOD_CHAR);
 
             // Build path to file/element by adding the mapped drive letter.
             char driveLetter = (char)('A' + settings.mappedDrive);
