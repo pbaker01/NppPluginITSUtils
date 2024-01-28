@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using static ITS.Utils.ITSENums;
 using static ITS.Utils.ITSConstants;
 using static System.Windows.Forms.LinkLabel;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Kbg.NppPluginNET
 {
@@ -59,10 +60,8 @@ namespace Kbg.NppPluginNET
     }
 }
 
-namespace Kbg.Demo.Namespace
-{
-    class Main
-    {
+namespace Kbg.Demo.Namespace {
+    class Main {
         #region " Fields "
         internal const string PluginName = "ITSPlugin";
         static string iniFilePath = null;
@@ -82,8 +81,7 @@ namespace Kbg.Demo.Namespace
         static INotepadPPGateway notepad = new NotepadPPGateway();
 
         // Used on calls to worker functions. 
-        struct ITSStatus
-        {
+        struct ITSStatus {
             public bool errorOccured;
             public int errorNum;
             public string errorText;
@@ -102,8 +100,7 @@ namespace Kbg.Demo.Namespace
          * The function is what contriols what is displayed when the user
          * selects Plugins | ITSPlugin 
          */
-        static internal void CommandMenuInit()
-        {
+        static internal void CommandMenuInit() {
             // Initialization of your plugin commands
             // You should fill your plugins commands here
 
@@ -117,8 +114,7 @@ namespace Kbg.Demo.Namespace
             iniFilePath = sbIniFilePath.ToString();
 
             // if config path doesn't exist, we create it
-            if (!Directory.Exists(iniFilePath))
-            {
+            if (!Directory.Exists(iniFilePath)) {
                 Directory.CreateDirectory(iniFilePath);
             }
 
@@ -133,26 +129,26 @@ namespace Kbg.Demo.Namespace
             //            bool check0nInit                      // optional. Make this menu item be checked visually
             //            );
             PluginBase.SetCommand(0, "Settings", OpenSettings);
-            PluginBase.SetCommand(0, "Edit Alias File", EditAliasFile);
-            PluginBase.SetCommand(1, "---", null);
-            PluginBase.SetCommand(2, "Toggle COBOL Comment", toggleCobolComment, new ShortcutKey(true, true, true, Keys.C));
-            PluginBase.SetCommand(3, "---", null);
-            PluginBase.SetCommand(4, "View ACOB COBOL Proc",   loadACOBCOBOLProc, new ShortcutKey(true, true, true, Keys.A));
-            PluginBase.SetCommand(5, "View UCOB COBOL Proc",   loadUCOBCOBOLProc, new ShortcutKey(true, true, true, Keys.U));
-            PluginBase.SetCommand(6, "View System Proc (DPS)", loadSystemProc, new ShortcutKey(true, true, true, Keys.S));
+            PluginBase.SetCommand(1, "Edit Alias File", EditAliasFile);
+            PluginBase.SetCommand(2, "---", null);
+            PluginBase.SetCommand(3, "Toggle COBOL Comment", toggleCobolComment, new ShortcutKey(true, true, true, Keys.C));
+            PluginBase.SetCommand(4, "---", null);
+            PluginBase.SetCommand(5, "View ACOB COBOL Proc", loadACOBCOBOLProc, new ShortcutKey(true, true, true, Keys.A));
+            PluginBase.SetCommand(6, "View UCOB COBOL Proc", loadUCOBCOBOLProc, new ShortcutKey(true, true, true, Keys.U));
+            PluginBase.SetCommand(7, "View System Proc (DPS)", loadSystemProc, new ShortcutKey(true, true, true, Keys.S));
             PluginBase.SetCommand(8, "---", null);
-            PluginBase.SetCommand(7, "View DMS Schema Record", loadDMSSchemaRecord, new ShortcutKey(true, true, true, Keys.D));
-            PluginBase.SetCommand(8, "---", null);
-            PluginBase.SetCommand(9, "View Program/Element from Lcl Workspace.", loadEltFromWorkspace, new ShortcutKey(true, true, true, Keys.W));
-            PluginBase.SetCommand(10, "View Program/Element from Env SRC file.", loadEltFromSRCFile, new ShortcutKey(true, true, true, Keys.F));
+            PluginBase.SetCommand(9, "View DMS Schema Record", loadDMSSchemaRecord, new ShortcutKey(true, true, true, Keys.D));
+            PluginBase.SetCommand(10, "---", null);
+            PluginBase.SetCommand(11, "View Program/Element from Lcl Workspace.", loadEltFromWorkspace, new ShortcutKey(true, true, true, Keys.W));
+            PluginBase.SetCommand(12, "View Program/Element from Env SRC file.", loadEltFromSRCFile, new ShortcutKey(true, true, true, Keys.F));
+            PluginBase.SetCommand(13, "---", null);
+            PluginBase.SetCommand(14, "Find Working Storage.", findWorkingStorageField, new ShortcutKey(true, true, true, Keys.E));
+            PluginBase.SetCommand(15, "Find Paragraph Name.", findParagraphName, new ShortcutKey(true, true, true, Keys.P));
         }
 
-        static internal void SetToolBarIcon()
-        { }
-        public static void OnNotification(ScNotification notification)
-        { }
-        static internal void PluginCleanUp()
-        { }
+        static internal void SetToolBarIcon() { }
+        public static void OnNotification(ScNotification notification) { }
+        static internal void PluginCleanUp() { }
         #endregion
 
         #region " Menu functions "
@@ -185,11 +181,94 @@ namespace Kbg.Demo.Namespace
                 }
                 catch (Exception ex) {
                     Console.WriteLine(ex.ToString());
-                }   
+                }
             }
 
             notepad.OpenFile(path);
         }
+
+        /*
+         * Working on this one.. 
+         * 
+         */
+        static void findWorkingStorageField() {
+            ITSStatus status = new ITSStatus();
+            // Get the selected text.
+            string dataName = getSelectedText();
+            if (dataName == null || dataName.Length == 0) {
+                status.errorOccured = true;
+                status.errorNum = (int)ERRORS.ITSERR011;
+                status.errorText = errorText[(int)ERRORS.ITSERR011];
+                showError(status.errorText);
+                return;
+            }
+
+            string searchStr = "^.{0,6} *[0-9]{1,2} *" + dataName;
+
+            int curLine = editor.GetCurrentLineNumber();
+            int fstVisableLine = editor.GetFirstVisibleLine();
+            CharacterRange cr = new CharacterRange(0, editor.GetLength());
+            TextToFind ttf = new TextToFind(cr, searchStr);
+            int findPos = editor.FindText(FindOption.REGEXP, ttf);
+            if (findPos == -1) {
+                status.errorOccured = true;
+                status.errorNum = (int)ERRORS.ITSERR017;
+                status.errorText = string.Format(errorText[status.errorNum], dataName);
+                showError(status.errorText);
+                return;
+            }
+
+            // Data element found!
+            editor.MarkerAdd(curLine, 20);
+
+            int lineNum = editor.LineFromPosition(findPos);
+            editor.SetFirstVisibleLine(lineNum);
+                        
+            return;
+        }
+
+
+        /*
+ * Working on this one.. 
+ * 
+ */
+        static void findParagraphName() {
+            ITSStatus status = new ITSStatus();
+            // Get the selected text.
+            string paragraphName = getSelectedText();
+            if (paragraphName == null || paragraphName.Length == 0) {
+                status.errorOccured = true;
+                status.errorNum = (int)ERRORS.ITSERR011;
+                status.errorText = errorText[(int)ERRORS.ITSERR011];
+                showError(status.errorText);
+                return;
+            }
+
+            string searchStr = "^.{0,6} *" + paragraphName;
+
+            int curLine = editor.GetCurrentLineNumber();
+            int fstVisableLine = editor.GetFirstVisibleLine();
+            CharacterRange cr = new CharacterRange(0, editor.GetLength());
+            TextToFind ttf = new TextToFind(cr, searchStr);
+            int findPos = editor.FindText(FindOption.REGEXP, ttf);
+            if (findPos == -1) {
+                status.errorOccured = true;
+                status.errorNum = (int)ERRORS.ITSERR018;
+                status.errorText = string.Format(errorText[status.errorNum], paragraphName);
+                showError(status.errorText);
+                return;
+            }
+        
+            // Paragraph found!
+            // Set marker 
+            editor.MarkerAdd(curLine, 20);
+            int lineNum = editor.LineFromPosition(findPos);
+            editor.SetFirstVisibleLine(lineNum);
+
+            return;
+        }
+
+
 
         /*
         * This function iterates through the lines selected and toggle the 
@@ -220,8 +299,7 @@ namespace Kbg.Demo.Namespace
 
             // Loop through each line and toggle the comment char "*"
             // in column 7.  Skip lines that are shorter than 7 characters.
-            for (var lineNum = strLine; lineNum <= endLine; lineNum++)
-            {
+            for (var lineNum = strLine; lineNum <= endLine; lineNum++) {
                 // Calculate line size by getting the line start and end positions
                 strPos = editor.PositionFromLine(lineNum);
                 endPos = editor.GetLineEndPosition(lineNum);
@@ -295,8 +373,7 @@ namespace Kbg.Demo.Namespace
             ITSStatus status = new ITSStatus();
             string fileName;
 
-            switch (settings.workingEnvt)
-            {
+            switch (settings.workingEnvt) {
                 case ENVIRONMENT.Development:
                     fileName = settings.DEVSRCFile;
                     break;
@@ -309,7 +386,7 @@ namespace Kbg.Demo.Namespace
                 default:
                     status.errorOccured = true;
                     // Environment not specified.
-                    status.errorNum = (int) ERRORS.ITSERR007;
+                    status.errorNum = (int)ERRORS.ITSERR007;
                     status.errorText = errorText[status.errorNum];
                     return;
             }
@@ -345,8 +422,7 @@ namespace Kbg.Demo.Namespace
             string procFile1;
             string procFile2;
 
-            switch (settings.workingEnvt)
-            {
+            switch (settings.workingEnvt) {
                 case ENVIRONMENT.Development:
                     procFile1 = settings.DEVACOBproc1File;
                     procFile2 = settings.DEVACOBproc2File;
@@ -361,7 +437,7 @@ namespace Kbg.Demo.Namespace
                     break;
                 default:
                     status.errorOccured = true;
-                    status.errorNum = (int) ERRORS.ITSERR008;
+                    status.errorNum = (int)ERRORS.ITSERR008;
                     status.errorText = errorText[status.errorNum];
                     showError(status.errorText);
                     return;
@@ -377,8 +453,7 @@ namespace Kbg.Demo.Namespace
             string procFile1 = "";
             string procFile2 = "";
 
-            switch (settings.workingEnvt)
-            {
+            switch (settings.workingEnvt) {
                 case ENVIRONMENT.Development:
                     procFile1 = settings.DEVUCOBprocFile;
                     break;
@@ -399,8 +474,7 @@ namespace Kbg.Demo.Namespace
             loadCOBOLProc(PROC_TYPE.UCOB_Proc, procFile1, procFile2);
         }
 
-        static void loadSystemProc()
-        {
+        static void loadSystemProc() {
 
             // ITSStatus status = new ITSStatus(); not needed just now.. 
 
@@ -435,10 +509,13 @@ namespace Kbg.Demo.Namespace
             }
 
             // Check if requesting a DPS screen.
+            // The screen proc contains two procs: the screen and the INIT procs
             if (procType == PROC_TYPE.ACOB_Proc || procType == PROC_TYPE.UCOB_Proc) {
                 if (elementName.StartsWith(SCREEN_PREFIX) && (!elementName.Contains(FWD_SLASH_CHAR.ToString()))) {
                     string[] elementNamePart = elementName.Split('-');
-                    if (elementName.Length > 2) {
+                    if (elementNamePart.Length == 4) {
+                        elementName = elementNamePart[0] + "-" + elementNamePart[elementNamePart.Length - 2] + FWD_SLASH_CHAR + COBP_VERSION;
+                    } else if (elementNamePart.Length == 3) {
                         elementName = elementNamePart[0] + "-" + elementNamePart[elementNamePart.Length - 1] + FWD_SLASH_CHAR + COBP_VERSION;
                     }
                 }
@@ -453,13 +530,12 @@ namespace Kbg.Demo.Namespace
             }
 
             // If both procfiles are empty then show error and exit. 
-            if ((procFile1 == null || procFile1.Length == 0)  &&
+            if ((procFile1 == null || procFile1.Length == 0) &&
                 (procFile2 == null || procFile2.Length == 0)) {
                 status.errorOccured = true;
 
                 // SHow error associated with the type of proc requested.
-                switch (procType)
-                {
+                switch (procType) {
                     case PROC_TYPE.ACOB_Proc:
                         status.errorNum = (int)ERRORS.ITSERR009;
                         break;
@@ -473,7 +549,7 @@ namespace Kbg.Demo.Namespace
                         break;
                 }
 
-                status.errorText = errorText[(int) status.errorNum];
+                status.errorText = errorText[(int)status.errorNum];
                 showError(status.errorText);
                 return;
             }
@@ -489,7 +565,7 @@ namespace Kbg.Demo.Namespace
 
                 status = loadEltFrmFile(procFile1, elementName);
                 if (status.errorOccured) {
-                    if (status.errorNum != (int) ERRORS.ITSERR010) {
+                    if (status.errorNum != (int)ERRORS.ITSERR010) {
                         showError(status.errorText);
                         return;
                     }
@@ -511,7 +587,7 @@ namespace Kbg.Demo.Namespace
 
                 status = loadEltFrmFile(procFile2, elementName);
                 if (status.errorOccured) {
-                    if (status.errorNum != (int) ERRORS.ITSERR010) {
+                    if (status.errorNum != (int)ERRORS.ITSERR010) {
                         showError(status.errorText);
                         return;
                     }
@@ -586,9 +662,10 @@ namespace Kbg.Demo.Namespace
         * Load DMS Record                                                                       
         * The user selects the record name in the program and then initiates the Load DMS       
         * record plugin entry point (this function).                                            
-        ******************************************************************************************/ 
+        ******************************************************************************************/
         static void loadDMSSchemaRecord() {
             ITSStatus status = new ITSStatus();
+            bool recFound = false;
 
             string recordName = getSelectedText().ToUpper();
 
@@ -655,13 +732,16 @@ namespace Kbg.Demo.Namespace
             Int32 BufferSize = 1028;
             using (var fileStream = File.OpenRead(path))
             using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize)) {
-                string pattern = @"^ *RECORD NAME IS ([a-zA-Z_-]+) *$";
-                Regex r = new Regex(pattern, RegexOptions.IgnoreCase);
+                string pattern1 = @"^ *RECORD NAME IS *([a-zA-Z_-]+) *$";
+                string pattern2 = @"^ *RECORD NAME *([a-zA-Z_-]+) *$";
+                Regex r1 = new Regex(pattern1, RegexOptions.IgnoreCase);
+                Regex r2 = new Regex(pattern2, RegexOptions.IgnoreCase);
+                Match m = null; 
+                Group g = null; 
 
                 bool eof = false;
 
                 string line;
-                bool recFound = false;
                 // Loop through DMS Schema File
                 int lineNum = 0;
                 while (!eof) {
@@ -676,51 +756,54 @@ namespace Kbg.Demo.Namespace
                     // If the record has been found determine at begining of a new record. 
                     if (!recFound) {
                         // Is this the begining of the requested record?
-                        Match m = r.Match(line);
+                        m = r1.Match(line);
                         if (!m.Success) {
-                            // Not a match... Keep looking.
-                            continue;
+                            m = r2.Match(line);
+                            if (!m.Success) {
+                                // Not a match... Keep looking.
+                                continue;
+                            }
                         }
-
-                        Group g = m.Groups[1];
-                        CaptureCollection cc = g.Captures;
-                        Capture c = cc[0];
-
-                        // If it does not match, skip and get next line. 
-                        if (!c.ToString().ToUpper().Equals(recordName)) {
-                            continue;
-                        }
-
-                        // *** DMS RECORD FOUND *** 
-
-                        // Start of DMS record found.  Create a new file in NPP, set language to COBOL
-                        // and set the tab color to Orange. 
-                        recFound = true;
-                        eof = true;
-                        notepad.OpenFile(path);
-                        // Set Proc Language to COBOL
-                        notepad.SetCurrentLanguage(LangType.L_COBOL);
-                        // Display line number where record found. 
-                        editor.SetFirstVisibleLine(lineNum - 1);
-                        // Set read only    
-                        Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_EDIT_SETREADONLY);
-                        // Set to Tab Color 4
-                        Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_VIEW_TAB_COLOUR_3);
                     }
-                }
 
-                // Specified record name was not found in the schema file. 
-                if (!recFound) {
-                    status.errorOccured = true;
-                    status.errorNum = (int)ERRORS.ITSERR016;
-                    status.errorText = string.Format(errorText[status.errorNum], fileName[0] + PERIOD_CHAR + fileName[1], path);
-                    showError(status.errorText);
-                    return;
+                    g = m.Groups[1];
+                    CaptureCollection cc = g.Captures;
+                    Capture c = cc[0];
+
+                    // If it does not match, skip and get next line. 
+                    if (!c.ToString().ToUpper().Equals(recordName)) {
+                        continue;
+                    }
+
+                    // *** DMS RECORD FOUND *** 
+
+                    // Start of DMS record found.  Create a new file in NPP, set language to COBOL
+                    // and set the tab color to Orange. 
+                    recFound = true;
+                    eof = true;
+                    notepad.OpenFile(path);
+                    // Set Proc Language to COBOL
+                    notepad.SetCurrentLanguage(LangType.L_COBOL);
+                    // Display line number where record found. 
+                    editor.SetFirstVisibleLine(lineNum - 1);
+                    // Set read only    
+                    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_EDIT_SETREADONLY);
+                    // Set to Tab Color 4
+                    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_VIEW_TAB_COLOUR_3);
                 }
+            }
+
+            // Specified record name was not found in the schema file. 
+            if (!recFound) {
+                status.errorOccured = true;
+                status.errorNum = (int)ERRORS.ITSERR016;
+                status.errorText = string.Format(errorText[status.errorNum], fileName[0] + PERIOD_CHAR + fileName[1], path);
+                showError(status.errorText);
                 return;
             }
+            return;
         }
-
+    
         static string getSelectedText()
         {
             // Get selection start and end positions.
@@ -737,6 +820,7 @@ namespace Kbg.Demo.Namespace
             if (selectedText.Length > 1 && selectedText.EndsWith(PERIOD_STRING)) { 
                 selectedText = selectedText.Substring(0, selectedText.Length - 1);
             }
+
             return selectedText;
         }
 

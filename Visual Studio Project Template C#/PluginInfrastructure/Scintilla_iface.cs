@@ -3283,5 +3283,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         {
             Dispose();
         }
+
+        public static implicit operator TextToFind(string v) {
+            throw new NotImplementedException();
+        }
     }
 }

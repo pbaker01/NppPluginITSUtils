@@ -33,14 +33,14 @@ namespace ITS.Utils {
             "ERR008 - Check settings - No environment selected",
             "ERR009 - Check settings - ACOB Proc File 1 and Proc File 2 are not specified for the selected environment.",
             "ERR010 - {0} not found in in File(s) {1}",
-            "ERR011 - No text selected - You need to select the name of what you want to load",
+            "ERR011 - No text selected",
             "ERR012 - File: {0} not found. Path used: {1}.",
             "ERR013 - Check settings - Schema File format error. File: {0}",
             "ERR014 - Check settings - UCOB Proc File is not specified for the selected environment.",
             "ERR015 - Check settings - System Proc File is not specified.",
             "ERR016 - DMS Record was not found in: {0} using path: {1}",
-            "ERR017 - Text",
-            "ERR018 - Text",
+            "ERR017 - Data element {0} not found.",
+            "ERR018 - Paragraph Name {0} not found",
             "ERR019 - Text",
             "ERR020 - Text"
         };
