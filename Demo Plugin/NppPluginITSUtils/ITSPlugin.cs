@@ -75,6 +75,10 @@ namespace Kbg.Demo.Namespace {
         static char PERIOD_CHAR = '.';
         static string PERIOD_STRING = PERIOD_CHAR.ToString();
 
+        static string SET = "SET";
+        static string AREA = "AREA";
+        static string RECORD = "RECORD";
+
         // general stuff things
         public static JSON_Tools.Utils.Settings settings = new JSON_Tools.Utils.Settings();
 
@@ -139,7 +143,9 @@ namespace Kbg.Demo.Namespace {
             PluginBase.SetCommand(7, "View UCOB COBOL Proc", loadUCOBCOBOLProc, new ShortcutKey(true, true, true, Keys.U));
             PluginBase.SetCommand(8, "View System Proc (DPS)", loadSystemProc, new ShortcutKey(true, true, true, Keys.S));
             PluginBase.SetCommand(9, "---", null);
-            PluginBase.SetCommand(10, "View DMS Schema Record", loadDMSSchemaRecord, new ShortcutKey(true, true, true, Keys.D));
+            PluginBase.SetCommand(10, "View DMS Schema Area", viewDMSSchemaArea);
+            PluginBase.SetCommand(10, "View DMS Schema Set", viewDMSSchemaSet);
+            PluginBase.SetCommand(10, "View DMS Schema Record", viewDMSSchemaRecord);
             PluginBase.SetCommand(11, "---", null);
             PluginBase.SetCommand(12, "View Program/Element from Lcl Workspace.", loadEltFromWorkspace, new ShortcutKey(true, true, true, Keys.W));
             PluginBase.SetCommand(13, "View Program/Element from Env SRC file.", loadEltFromSRCFile, new ShortcutKey(true, true, true, Keys.F));
@@ -147,8 +153,8 @@ namespace Kbg.Demo.Namespace {
             PluginBase.SetCommand(15, "Find Working Storage.", findWorkingStorageField, new ShortcutKey(true, true, true, Keys.E));
             PluginBase.SetCommand(16, "Find Paragraph Name.", findParagraphName, new ShortcutKey(true, true, true, Keys.P));
             PluginBase.SetCommand(17, "---", null);
-            PluginBase.SetCommand(18, "Hide Comment Lines", hideCommentLines, new ShortcutKey(true, true, true, Keys.E));
-            PluginBase.SetCommand(19, "Show Comment Lines", showCommentLines, new ShortcutKey(true, true, true, Keys.E));
+            PluginBase.SetCommand(18, "Hide Comment Lines", hideCommentLines);
+            PluginBase.SetCommand(19, "Show Comment Lines", showCommentLines);
         }
 
         static internal void SetToolBarIcon() { }
@@ -770,12 +776,24 @@ namespace Kbg.Demo.Namespace {
             return status;
         }
 
+        static void viewDMSSchemaArea() {
+            viewDMSSchemaFile(AREA);
+        }
+
+        static void viewDMSSchemaSet() {
+            viewDMSSchemaFile(SET);
+        }
+
+        static void viewDMSSchemaRecord() {
+            viewDMSSchemaFile(RECORD);
+        }
+
         /*****************************************************************************************
-        * Load DMS Record                                                                       
+        * Load DMS SET AREA or RECORD                                                                        
         * The user selects the record name in the program and then initiates the Load DMS       
         * record plugin entry point (this function).                                            
         ******************************************************************************************/
-        static void loadDMSSchemaRecord() {
+        static void viewDMSSchemaFile(string dmsType) {
             ITSStatus status = new ITSStatus();
             bool recFound = false;
 
@@ -844,8 +862,8 @@ namespace Kbg.Demo.Namespace {
             Int32 BufferSize = 1028;
             using (var fileStream = File.OpenRead(path))
             using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize)) {
-                string pattern1 = @"^ *RECORD NAME IS *([a-zA-Z_-]+) *$";
-                string pattern2 = @"^ *RECORD NAME *([a-zA-Z_-]+) *$";
+                string pattern1 = String.Format(@"^ *{0} *NAME IS *([a-zA-Z0-9_-]+) *$", dmsType);
+                string pattern2 = String.Format(@"^ *{0} *NAME *([a-zA-Z0-9_-]+) *$", dmsType);
                 Regex r1 = new Regex(pattern1, RegexOptions.IgnoreCase);
                 Regex r2 = new Regex(pattern2, RegexOptions.IgnoreCase);
                 Match m = null;
@@ -897,7 +915,7 @@ namespace Kbg.Demo.Namespace {
                     // Set Proc Language to COBOL
                     notepad.SetCurrentLanguage(LangType.L_COBOL);
                     // Display line number where record found. 
-                    editor.SetFirstVisibleLine(lineNum - 1);
+                    editor.SetFirstVisibleLine(Math.Max(lineNum - 5, 0));
                     // Set read only    
                     Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_EDIT_SETREADONLY);
                     // Set to Tab Color 4
