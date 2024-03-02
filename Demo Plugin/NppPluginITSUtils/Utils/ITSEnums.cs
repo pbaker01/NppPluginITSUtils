@@ -21,34 +21,38 @@ namespace ITS.Utils
             System_Proc = 2
         }
 
+        public enum CHG_CMMT_FORMAT {
+            IIMMYY = 0,
+            MMYYII = 1
+        }
 
         public enum MAPPED_DRIVE {
             [Description("A:")] A = 0,
-            B = A+1,
-            C = B+1,
-            D = C+1,
-            E = D+1,
-            F = E+1,
-            G = F+1,
-            H = G+1,
-            I = H+1,
-            J = I+1,
-            K = J+1,
-            L = K+1,
-            M = L+1,
-            N = M+1,
-            O = N+1,
-            P = O+1,
-            Q = P+1,
-            R = Q+1,
-            S = R+1,
-            T = S+1,
-            U = T+1,
-            V = U+1,
-            W = V+1,
-            X = W+1,
-            Y = X+1,
-            Z = Y+1
+            [Description("B:")] B = A+1,
+            [Description("C:")] C = B+1,
+            [Description("D:")] D = C+1,
+            [Description("E:")] E = D+1,
+            [Description("F:")] F = E+1,
+            [Description("G:")] G = F+1,
+            [Description("H:")] H = G+1,
+            [Description("I:")] I = H+1,
+            [Description("J:")] J = I+1,
+            [Description("K:")] K = J+1,
+            [Description("L:")] L = K+1,
+            [Description("M:")] M = L+1,
+            [Description("N:")] N = M+1,
+            [Description("O:")] O = N+1,
+            [Description("P:")] P = O+1,
+            [Description("Q:")] Q = P+1,
+            [Description("R:")] R = Q+1,
+            [Description("S:")] S = R+1,
+            [Description("T:")] T = S+1,
+            [Description("U:")] U = T+1,
+            [Description("V:")] V = U+1,
+            [Description("W:")] W = V+1,
+            [Description("X:")] X = W+1,
+            [Description("Y:")] Y = X+1,
+            [Description("Z:")] Z = Y+1
         }
 
         public enum ERRORS

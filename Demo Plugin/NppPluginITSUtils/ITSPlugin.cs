@@ -9,6 +9,7 @@ using static ITS.Utils.ITSENums;
 using static ITS.Utils.ITSConstants;
 using static System.Windows.Forms.LinkLabel;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using ITS.Utils;
 
 namespace Kbg.NppPluginNET
 {
@@ -132,18 +133,22 @@ namespace Kbg.Demo.Namespace {
             PluginBase.SetCommand(1, "Edit Alias File", EditAliasFile);
             PluginBase.SetCommand(2, "---", null);
             PluginBase.SetCommand(3, "Toggle COBOL Comment", toggleCobolComment, new ShortcutKey(true, true, true, Keys.C));
-            PluginBase.SetCommand(4, "---", null);
-            PluginBase.SetCommand(5, "View ACOB COBOL Proc", loadACOBCOBOLProc, new ShortcutKey(true, true, true, Keys.A));
-            PluginBase.SetCommand(6, "View UCOB COBOL Proc", loadUCOBCOBOLProc, new ShortcutKey(true, true, true, Keys.U));
-            PluginBase.SetCommand(7, "View System Proc (DPS)", loadSystemProc, new ShortcutKey(true, true, true, Keys.S));
-            PluginBase.SetCommand(8, "---", null);
-            PluginBase.SetCommand(9, "View DMS Schema Record", loadDMSSchemaRecord, new ShortcutKey(true, true, true, Keys.D));
-            PluginBase.SetCommand(10, "---", null);
-            PluginBase.SetCommand(11, "View Program/Element from Lcl Workspace.", loadEltFromWorkspace, new ShortcutKey(true, true, true, Keys.W));
-            PluginBase.SetCommand(12, "View Program/Element from Env SRC file.", loadEltFromSRCFile, new ShortcutKey(true, true, true, Keys.F));
-            PluginBase.SetCommand(13, "---", null);
-            PluginBase.SetCommand(14, "Find Working Storage.", findWorkingStorageField, new ShortcutKey(true, true, true, Keys.E));
-            PluginBase.SetCommand(15, "Find Paragraph Name.", findParagraphName, new ShortcutKey(true, true, true, Keys.P));
+            PluginBase.SetCommand(4, "Add Author's initials and MMYY", addAuthorDate);
+            PluginBase.SetCommand(5, "---", null);
+            PluginBase.SetCommand(6, "View ACOB COBOL Proc", loadACOBCOBOLProc, new ShortcutKey(true, true, true, Keys.A));
+            PluginBase.SetCommand(7, "View UCOB COBOL Proc", loadUCOBCOBOLProc, new ShortcutKey(true, true, true, Keys.U));
+            PluginBase.SetCommand(8, "View System Proc (DPS)", loadSystemProc, new ShortcutKey(true, true, true, Keys.S));
+            PluginBase.SetCommand(9, "---", null);
+            PluginBase.SetCommand(10, "View DMS Schema Record", loadDMSSchemaRecord, new ShortcutKey(true, true, true, Keys.D));
+            PluginBase.SetCommand(11, "---", null);
+            PluginBase.SetCommand(12, "View Program/Element from Lcl Workspace.", loadEltFromWorkspace, new ShortcutKey(true, true, true, Keys.W));
+            PluginBase.SetCommand(13, "View Program/Element from Env SRC file.", loadEltFromSRCFile, new ShortcutKey(true, true, true, Keys.F));
+            PluginBase.SetCommand(14, "---", null);
+            PluginBase.SetCommand(15, "Find Working Storage.", findWorkingStorageField, new ShortcutKey(true, true, true, Keys.E));
+            PluginBase.SetCommand(16, "Find Paragraph Name.", findParagraphName, new ShortcutKey(true, true, true, Keys.P));
+            PluginBase.SetCommand(17, "---", null);
+            PluginBase.SetCommand(18, "Hide Comment Lines", hideCommentLines, new ShortcutKey(true, true, true, Keys.E));
+            PluginBase.SetCommand(19, "Show Comment Lines", showCommentLines, new ShortcutKey(true, true, true, Keys.E));
         }
 
         static internal void SetToolBarIcon() { }
@@ -223,7 +228,7 @@ namespace Kbg.Demo.Namespace {
 
             int lineNum = editor.LineFromPosition(findPos);
             editor.SetFirstVisibleLine(lineNum);
-                        
+
             return;
         }
 
@@ -244,7 +249,7 @@ namespace Kbg.Demo.Namespace {
                 return;
             }
 
-            string searchStr = "^.{0,6} *" + paragraphName;
+            string searchStr = "^.{0,6} *" + paragraphName + "\\.";
 
             int curLine = editor.GetCurrentLineNumber();
             int fstVisableLine = editor.GetFirstVisibleLine();
@@ -258,7 +263,7 @@ namespace Kbg.Demo.Namespace {
                 showError(status.errorText);
                 return;
             }
-        
+
             // Paragraph found!
             // Set marker 
             editor.MarkerAdd(curLine, 20);
@@ -268,6 +273,35 @@ namespace Kbg.Demo.Namespace {
             return;
         }
 
+        static void hideCommentLines() {
+            string line;
+            int cmtStr = 0;
+            int cmtEnd = 0;
+
+            for (int i = 0; i < editor.GetLineCount(); i++) {
+                line = editor.GetLine(i).TrimEnd();
+                if (line.Length > 6) {
+                    if (line[6] == '*') {
+                        if (cmtStr == 0) {
+                            cmtStr = i;
+                            cmtEnd = i;
+                        } else {
+                            cmtEnd = i;
+                        }
+                        // editor.HideLines(i, i);
+                    } else if (cmtStr != 0) {
+                        editor.HideLines(cmtStr, cmtEnd);
+                        editor.HideLines(cmtStr, cmtEnd);
+                        cmtStr = 0;
+                        cmtEnd = 0;
+                    }
+                }
+            }
+        }
+
+        static void showCommentLines() {
+            editor.ShowLines(0, editor.GetLineCount() - 1);
+        }
 
 
         /*
@@ -334,6 +368,85 @@ namespace Kbg.Demo.Namespace {
 
             return;
         }
+
+        /*
+        * This function iterates through the lines selected and toggle the 
+        * comment character in column 7.  If the line length is <= 6 the 
+        * line is skipped. If the character at column 7 is a space or 
+        * asterisk then toggle the value. If the character is neither a 
+        * space or asterisk then skip line.
+        */
+        static void addAuthorDate() {
+            // Get selection start and end positions.
+            // If selStr and selEnd are equal then there is no selection,
+            // just process the line the caret is on.
+            var strSel = editor.GetSelectionStart();
+            var endSel = editor.GetSelectionEnd();
+
+            // Get the line numbers associated with the start and end positions.
+            // The strLine and endLine may be the same line.
+            var strLine = editor.LineFromPosition(strSel);
+            var endLine = editor.LineFromPosition(endSel);
+
+            // Create string baseed on selected format: iimmyy or mmyyii.
+
+            string initials = settings.initials.Trim();
+            if (initials.Length != 2) {
+                if (initials.Length > 2) {
+                    initials = initials.Substring(0, 2);
+                }
+                else if (initials.Length == 1) {
+                    initials = initials + "?";
+                }
+                else {
+                    initials = "??";
+                }
+            }
+
+            string chgCmmtString;
+            switch (settings.chgFormat) {
+                case CHG_CMMT_FORMAT.IIMMYY:
+                    // Format IIMMYY i.e. PB0324
+                    chgCmmtString = initials + DateTime.Now.ToString("MMy");
+                    break;
+                case CHG_CMMT_FORMAT.MMYYII:
+                    // Format MMYYII i.e. 0324PB
+                    chgCmmtString = DateTime.Now.ToString("MMy") + initials;
+                    break;
+                default:
+                    // Format MMYYII i.e. 0324PB
+                    chgCmmtString = initials + DateTime.Now.ToString("MMy");
+                    break;
+            }
+
+            string lineText;
+
+            int strPos;
+            int endPos;
+
+            // Loop through each line and toggle the comment char "*"
+            // in column 7.  Skip lines that are shorter than 7 characters.
+            for (var lineNum = strLine; lineNum <= endLine; lineNum++) {
+                // Calculate line size by getting the line start and end positions
+                strPos = editor.PositionFromLine(lineNum);
+                endPos = editor.GetLineEndPosition(lineNum);
+
+                // Get line text and convert to char array
+                editor.SetTargetRange(strPos, endPos);
+                lineText = editor.GetTargetText();
+
+                if (lineText.Length < 6) {
+                    lineText = lineText.PadRight(6, ' ');
+                }
+
+                lineText = chgCmmtString + lineText.Substring(6);
+
+                editor.ReplaceTarget(lineText.Length, lineText);
+            }
+
+            return;
+        }
+
 
         /*
          *  This is used to load a program (or other) element into notepad++
@@ -554,7 +667,7 @@ namespace Kbg.Demo.Namespace {
                 return;
             }
 
-
+            bool found = false;
             if (procFile1 != null && procFile1.Length > 0) {
                 procFiles = procFile1; // procFiles - needed for an error message
                 status = validateFileName(procFile1);
@@ -564,15 +677,14 @@ namespace Kbg.Demo.Namespace {
                 }
 
                 status = loadEltFrmFile(procFile1, elementName);
-                if (status.errorOccured) {
-                    if (status.errorNum != (int)ERRORS.ITSERR010) {
-                        showError(status.errorText);
-                        return;
-                    }
+                if (!status.errorOccured) {
+                    // If no errors then we are done here.
+                    found = true;
                 }
+                
             }
 
-            if (procFile2 != null && procFile2.Length > 0) {
+            if (!found && procFile2 != null && procFile2.Length > 0) {
                 // procFiles is needed for error handling
                 if (procFiles.Length == 0)
                     procFiles = procFile2;
@@ -736,8 +848,8 @@ namespace Kbg.Demo.Namespace {
                 string pattern2 = @"^ *RECORD NAME *([a-zA-Z_-]+) *$";
                 Regex r1 = new Regex(pattern1, RegexOptions.IgnoreCase);
                 Regex r2 = new Regex(pattern2, RegexOptions.IgnoreCase);
-                Match m = null; 
-                Group g = null; 
+                Match m = null;
+                Group g = null;
 
                 bool eof = false;
 
@@ -803,9 +915,8 @@ namespace Kbg.Demo.Namespace {
             }
             return;
         }
-    
-        static string getSelectedText()
-        {
+
+        static string getSelectedText() {
             // Get selection start and end positions.
             // If selStr and selEnd are equal then there is no selection,
             // just process the line the caret is on.
@@ -817,19 +928,17 @@ namespace Kbg.Demo.Namespace {
             string selectedText = editor.GetTargetText().Trim();
             // Make friendly allow period to be included... just truncate. 
             // If there are two periods at the end or other garbage.. Ignored for now. 
-            if (selectedText.Length > 1 && selectedText.EndsWith(PERIOD_STRING)) { 
+            if (selectedText.Length > 1 && selectedText.EndsWith(PERIOD_STRING)) {
                 selectedText = selectedText.Substring(0, selectedText.Length - 1);
             }
 
             return selectedText;
         }
 
-        static ITSStatus validateFileName(string pFileName)
-        {
+        static ITSStatus validateFileName(string pFileName) {
             ITSStatus status = new ITSStatus();
 
-            if (pFileName == null || pFileName.Length == 0)
-            {
+            if (pFileName == null || pFileName.Length == 0) {
                 status.errorOccured = true;
                 status.errorNum = (int)ERRORS.ITSERR007;
                 status.errorText = string.Format(errorText[status.errorNum], pFileName);
@@ -838,15 +947,13 @@ namespace Kbg.Demo.Namespace {
 
             string[] fileParts = pFileName.Split(ASTERISK_CHAR);
             int numAsterisks = fileParts.Length - 1;
-            if (numAsterisks == 0)
-            {
+            if (numAsterisks == 0) {
                 status.errorOccured = true;
                 status.errorNum = (int)ERRORS.ITSERR005;
                 status.errorText = string.Format(errorText[status.errorNum], pFileName);
                 return status;
             }
-            else if (numAsterisks > 1)
-            {
+            else if (numAsterisks > 1) {
                 status.errorOccured = true;
                 status.errorNum = (int)ERRORS.ITSERR006;
                 status.errorText = string.Format(errorText[status.errorNum], pFileName);
@@ -858,12 +965,10 @@ namespace Kbg.Demo.Namespace {
 
         }
 
-        static ITSStatus validateElementName(string pElementName)
-        {
+        static ITSStatus validateElementName(string pElementName) {
             ITSStatus status = new ITSStatus();
 
-            if (pElementName == null || pElementName.Length == 0)
-            {
+            if (pElementName == null || pElementName.Length == 0) {
                 status.errorOccured = true;
                 status.errorNum = (int)ERRORS.ITSERR011;
                 status.errorText = string.Format(errorText[status.errorNum], pElementName);
@@ -875,12 +980,10 @@ namespace Kbg.Demo.Namespace {
 
         }
 
-        static ITSStatus validateRecordName(string pRecordName)
-        {
+        static ITSStatus validateRecordName(string pRecordName) {
             ITSStatus status = new ITSStatus();
 
-            if (pRecordName == null || pRecordName.Length == 0)
-            {
+            if (pRecordName == null || pRecordName.Length == 0) {
                 status.errorOccured = true;
                 status.errorNum = (int)ERRORS.ITSERR011;
                 status.errorText = string.Format(errorText[status.errorNum], pRecordName);
@@ -894,11 +997,11 @@ namespace Kbg.Demo.Namespace {
 
 
 
-         static string getFilePath(string programFileName, string elementName) {
+        static string getFilePath(string programFileName, string elementName) {
             string path = "";
 
             // Replace * in program file name with a back slash
-            string pgmFileFmt = programFileName.Replace(ASTERISK_CHAR, '\\'); 
+            string pgmFileFmt = programFileName.Replace(ASTERISK_CHAR, '\\');
 
             // Replace a forward slash with a "." to indicate extension (version in Unisys)
             string eltFileFmt = elementName.Replace(FWD_SLASH_CHAR, PERIOD_CHAR);
@@ -963,9 +1066,9 @@ namespace Kbg.Demo.Namespace {
             }
         }
 
-    static void showError(string pErrorTxt) {
-                    MessageBox.Show(pErrorTxt);
-                }
+        static void showError(string pErrorTxt) {
+            MessageBox.Show(pErrorTxt);
+        }
 
         static void writeNPPLine(string pLine) {
 
@@ -982,7 +1085,6 @@ namespace Kbg.Demo.Namespace {
                 editor.ReplaceTarget(pLine.Length, pLine);
             }
         }
-
 
         /*
          * Used for testing.

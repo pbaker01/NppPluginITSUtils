@@ -23,7 +23,14 @@ namespace JSON_Tools.Utils
             Category("1-General"), DefaultValue("??")]
         public string initials { get; set; }
 
-        [Description("Working Environment.  Used for proc/record retrieval."),
+        [Description("Change comment format. Change comments go in columns 1-6\r\n" +
+                     "Formats are:\r\n" +
+                     "iimmyy - 2 initials followed by the numeric month and year.\r\n" +
+                     "mmyyii - Numeric month and year followed by 2 initials.\r\n"),
+            Category("1-General"), DefaultValue(ITSENums.CHG_CMMT_FORMAT.IIMMYY)]
+        public CHG_CMMT_FORMAT chgFormat { get; set; }
+
+        [Description("Working Environment.  Used for file/proc/record retrieval."),
             Category("1-General"), DefaultValue(ITSENums.ENVIRONMENT.Development)]
         public ENVIRONMENT workingEnvt { get; set; }
 
