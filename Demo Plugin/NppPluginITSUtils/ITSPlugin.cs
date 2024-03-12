@@ -714,8 +714,6 @@ namespace Kbg.Demo.Namespace {
 
             // The only error that will come here is Not Found.. 
             if (status.errorOccured) {
-                status.errorNum = (int)ERRORS.ITSERR010;
-                status.errorText = string.Format(errorText[status.errorNum], procFiles);
                 showError(status.errorText);
                 return; }
             else {
