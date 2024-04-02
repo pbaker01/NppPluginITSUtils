@@ -4,12 +4,13 @@ using System.IO;
 using System.Text;
 using Kbg.NppPluginNET.PluginInfrastructure;
 using System.Windows.Forms;
-using System.Text.RegularExpressions;
+  // using System.Text.RegularExpressions;
 using static ITS.Utils.ITSENums;
 using static ITS.Utils.ITSConstants;
 using static System.Windows.Forms.LinkLabel;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using ITS.Utils;
+using System.Text.RegularExpressions;
 
 namespace Kbg.NppPluginNET
 {
@@ -53,8 +54,15 @@ namespace Kbg.NppPluginNET
             Kbg.Demo.Namespace.Main.SetToolBarIcon();
         }
 
-        public static void OnNotification(ScNotification notification)
-        {
+        /**
+         * Listener for Notifications
+         */
+        public static void OnNotification(ScNotification notification) {
+            // File Opened Notification - idFrom header field contains the BufferID
+            if (notification.Header.Code == (uint)NppMsg.NPPN_FILEOPENED) {
+                // Change buffer language type to COBOL - agr1 is BufferID arg2 is LangType
+                Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETBUFFERLANGTYPE, notification.Header.IdFrom, (int) LangType.L_COBOL);
+            }
         }
 
         internal static string PluginName { get { return Kbg.Demo.Namespace.Main.PluginName; }}
@@ -91,6 +99,14 @@ namespace Kbg.Demo.Namespace {
             public int errorNum;
             public string errorText;
         }
+
+        struct debugContext {
+            public bool workingStorageFound;
+            public bool procedureDivisionFound;
+            public bool fatalError;
+            public int lineNum;
+        }
+
 
         static bool SET_READ_ONLY = true;
         static bool DO_NOT_SET_READ_ONLY = !SET_READ_ONLY;
@@ -155,6 +171,11 @@ namespace Kbg.Demo.Namespace {
             PluginBase.SetCommand(17, "---", null);
             PluginBase.SetCommand(18, "Hide Comment Lines", hideCommentLines);
             PluginBase.SetCommand(19, "Show Comment Lines", showCommentLines);
+            PluginBase.SetCommand(20, "---", null);
+            PluginBase.SetCommand(21, "Add Display Lines", addDisplayLines);
+            PluginBase.SetCommand(21, "Delete xxTEST Lines", deletexxTESTLines);
+
+
         }
 
         static internal void SetToolBarIcon() { }
@@ -309,6 +330,263 @@ namespace Kbg.Demo.Namespace {
             editor.ShowLines(0, editor.GetLineCount() - 1);
         }
 
+        static void setCobolLangForAllTabs() {
+            // Set read only    
+            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_EDIT_SETREADONLY);
+
+
+
+        }
+
+
+
+        static void addDisplayLines() {
+
+            debugContext debugInfo = new debugContext();
+            debugInfo.procedureDivisionFound = false;
+            debugInfo.lineNum = 0;
+
+            string currLang = editor.GetLexerLanguage();
+
+            while (debugInfo.lineNum < editor.GetLineCount() &&
+                  !debugInfo.fatalError) {
+                debugInfo = processLine(debugInfo);
+            }
+
+            processPD(debugInfo);
+
+        }
+
+        // static displayContext 
+
+        static debugContext processLine(debugContext debugInfo) {
+            string lineText;
+            char[] lineTextAsChars;
+
+            int lineLen;
+
+            var strPos = editor.PositionFromLine(debugInfo.lineNum);
+            var endPos = editor.GetLineEndPosition(debugInfo.lineNum);
+            editor.SetTargetRange(strPos, endPos);
+
+
+            // Get the current line length
+            lineLen = endPos - strPos;
+
+            // Skip lines that are empty.
+            if (lineLen <= 6) {
+                debugInfo.lineNum = debugInfo.lineNum + 1;
+                return debugInfo;
+            }
+
+            lineText = editor.GetLine(debugInfo.lineNum);
+            lineTextAsChars = lineText.ToCharArray();
+
+            // Is this a comment line?
+            if (lineTextAsChars[6] == ASTERISK_CHAR) {
+                debugInfo.lineNum = debugInfo.lineNum + 1;
+                return debugInfo;
+            }
+
+            if (!debugInfo.workingStorageFound) {
+                string cobolCmd = lineText.Substring(7).Trim();
+                if (cobolCmd.Length > WORKING_STORAGE_SECTION.Length &&
+                    cobolCmd.StartsWith(WORKING_STORAGE_SECTION)) {
+                    debugInfo.workingStorageFound = true;
+                    debugInfo=processWS(debugInfo);
+                    return debugInfo;
+                }
+                debugInfo.lineNum = debugInfo.lineNum + 1;
+                return debugInfo;
+            }
+
+
+            if (!debugInfo.procedureDivisionFound) {
+                string cobolCmd = lineText.Substring(7).Trim();
+                if (cobolCmd.Length > PROCEDURE_DIVISION.Length &&
+                    cobolCmd.StartsWith(PROCEDURE_DIVISION)) {
+                    debugInfo.procedureDivisionFound = true;
+                    debugInfo.lineNum = debugInfo.lineNum + 1;
+                    return debugInfo;
+                }
+                debugInfo.lineNum = debugInfo.lineNum + 1;
+                return debugInfo;
+            }
+
+            // Procedure Division has been found!
+
+            return processPG(debugInfo, lineText);
+        }
+
+        static debugContext processWS(debugContext debugInfo) {
+
+            string wsFile = "cobolDspWS.cbl";
+
+            string templatePath = notepad.GetPluginConfigPath() + "\\ITSPlugin\\" + wsFile;
+
+            if (!File.Exists(templatePath)) {
+                showError(string.Format(errorText[(int) ERRORS.ITSERR019], wsFile, templatePath));
+                debugInfo.fatalError = true;
+                return debugInfo;
+            }
+
+            // COBOL Working Storage Template exists. Open and Read.
+
+            Int32 BufferSize = 1028;
+            using (var fileStream = File.OpenRead(templatePath))
+            using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize)) {
+                string line;
+                // Loop through COBOL Template File
+                while (!streamReader.EndOfStream) {
+                    // Get next line
+                    line = streamReader.ReadLine();
+                    line = Regex.Replace(line, @"\t|\n|\r", "");
+                    debugInfo.lineNum = debugInfo.lineNum+1;
+                    editor.GotoLine(debugInfo.lineNum);
+                    editor.NewLine();
+                    int strPos = editor.PositionFromLine(debugInfo.lineNum);
+                    int endPos = editor.GetLineEndPosition(debugInfo.lineNum);
+                    editor.SetTargetRange(strPos, endPos);
+                    editor.ReplaceTarget(line.Length, line);
+                }
+            }
+            return debugInfo;
+        }
+
+        static debugContext processPD(debugContext debugInfo) {
+
+            string wsFile = "cobolDspPD.cbl";
+
+            string templatePath = notepad.GetPluginConfigPath() + "\\ITSPlugin\\" + wsFile;
+
+            if (!File.Exists(templatePath)) {
+                showError(string.Format(errorText[(int)ERRORS.ITSERR019], wsFile, templatePath));
+                debugInfo.fatalError = true;
+                return debugInfo;
+            }
+
+            // COBOL Working Storage Template exists. Open and Read.
+            debugInfo.lineNum = editor.GetLineCount();
+            editor.GotoLine(debugInfo.lineNum);
+            Int32 BufferSize = 1028;
+            editor.NewLine();
+            using (var fileStream = File.OpenRead(templatePath))
+            using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize)) {
+                string line;
+                // Loop through COBOL Template File
+                while (!streamReader.EndOfStream) {
+                    // Get next line
+                    line = streamReader.ReadLine();
+                    line = Regex.Replace(line, @"\t|\n|\r", "");
+                    debugInfo.lineNum = debugInfo.lineNum + 1;
+                    editor.GotoLine(debugInfo.lineNum);
+                    editor.NewLine();
+                    // editor.AppendText(line.Length, line);
+                    int strPos = editor.PositionFromLine(debugInfo.lineNum);
+                    int endPos = editor.GetLineEndPosition(debugInfo.lineNum);
+                    editor.SetTargetRange(strPos, endPos);
+                    editor.ReplaceTarget(line.Length, line);
+                }
+            }
+            return debugInfo;
+        }
+
+
+        static debugContext processPG(debugContext debugInfo, string lineText) {
+            var strPos = editor.PositionFromLine(debugInfo.lineNum);
+            var endPos = editor.GetLineEndPosition(debugInfo.lineNum);
+
+            string pattern1 = @"^.{7,7}([A-Za-z0-9_-]+)\. *EXIT\.";
+            string pattern2 = @"^.{7,7}([A-Za-z0-9_-]+)\.";
+            Regex r1 = new Regex(pattern1, RegexOptions.IgnoreCase);
+            Regex r2 = new Regex(pattern2, RegexOptions.IgnoreCase);
+            Match m = null;
+            Group g = null;
+
+
+            // Is this the begining of the requested record?
+            m = r1.Match(lineText);
+
+            // @TODO Need to implement this.. 
+            if (m.Success) {
+                debugInfo.lineNum = debugInfo.lineNum+1;
+                return debugInfo;
+            }
+
+            m = r2.Match(lineText);
+            if (m.Success) {
+                g = m.Groups[1];
+                CaptureCollection cc = g.Captures;
+                Capture c = cc[0];
+
+                bool multiLine = false;
+                if (29 + 15 + c.ToString().Length > 72) {
+                    multiLine = true;
+                }
+
+                string tstComment = getInitials() + "TEST";
+
+                editor.GotoLine(debugInfo.lineNum+1);
+                
+                // Check for EXIT. on next line.  Note does not check for comment line. 
+                if (editor.GetLine(debugInfo.lineNum + 1).Length >= 8 && 
+                    editor.GetLine(debugInfo.lineNum+1).Substring(7).Trim().StartsWith("EXIT.")) {
+                    debugInfo.lineNum = debugInfo.lineNum+1;
+                    return debugInfo;
+                }
+
+                // If paragraph ends with "EXIT" then skip it. 
+                if (c.ToString().EndsWith("EXIT")) {
+                    debugInfo.lineNum = debugInfo.lineNum + 1;
+                    return debugInfo;
+                }
+
+                editor.NewLine();
+                strPos = editor.PositionFromLine(debugInfo.lineNum+1);
+                endPos = editor.GetLineEndPosition(debugInfo.lineNum+1);
+                editor.SetTargetRange(strPos, endPos);
+                if (!multiLine) {
+                    lineText = tstComment + "     DISPLAY 'Entering " + c.ToString() + "'" + " UPON PRINTER.";
+                } else {
+                    lineText = tstComment + "     DISPLAY 'Entering " + c.ToString() + "'";
+                }
+                editor.ReplaceTarget(lineText.Length, lineText);
+
+                if (multiLine) {
+                    editor.GotoLine(debugInfo.lineNum + 2);
+                    editor.NewLine();
+                    strPos = editor.PositionFromLine(debugInfo.lineNum+2);
+                    endPos = editor.GetLineEndPosition(debugInfo.lineNum+2);
+                    editor.SetTargetRange(strPos, endPos);
+                    lineText = "PBTEST         UPON PRINTER.";
+                    editor.ReplaceTarget(lineText.Length, lineText);
+                    debugInfo.lineNum = debugInfo.lineNum + 3;
+                } else {
+                    debugInfo.lineNum = debugInfo.lineNum + 2;
+                }
+               
+                return debugInfo;
+            }
+
+            debugInfo.lineNum = debugInfo.lineNum+1;
+            return debugInfo;
+        }
+
+        static void deletexxTESTLines() {
+
+            string tstComment = getInitials() + "TEST";
+
+            int lineNum = 0;
+            while (lineNum < editor.GetLineCount()) {
+                if (editor.GetLine(lineNum).StartsWith(tstComment)) {
+                    editor.GotoLine(lineNum);
+                    editor.LineDelete();
+                }
+                else {
+                    lineNum++;
+                }
+            }
+        }
 
         /*
         * This function iterates through the lines selected and toggle the 
@@ -396,18 +674,7 @@ namespace Kbg.Demo.Namespace {
 
             // Create string baseed on selected format: iimmyy or mmyyii.
 
-            string initials = settings.initials.Trim();
-            if (initials.Length != 2) {
-                if (initials.Length > 2) {
-                    initials = initials.Substring(0, 2);
-                }
-                else if (initials.Length == 1) {
-                    initials = initials + "?";
-                }
-                else {
-                    initials = "??";
-                }
-            }
+            string initials = getInitials();
 
             string chgCmmtString;
             switch (settings.chgFormat) {
@@ -1084,6 +1351,22 @@ namespace Kbg.Demo.Namespace {
 
         static void showError(string pErrorTxt) {
             MessageBox.Show(pErrorTxt);
+        }
+
+        static string getInitials() {
+            string initials = settings.initials.Trim();
+            if (initials.Length != 2) {
+                if (initials.Length > 2) {
+                    initials = initials.Substring(0, 2);
+                }
+                else if (initials.Length == 1) {
+                    initials = initials + "?";
+                }
+                else {
+                    initials = "??";
+                }
+            }
+            return initials;
         }
 
         static void writeNPPLine(string pLine) {

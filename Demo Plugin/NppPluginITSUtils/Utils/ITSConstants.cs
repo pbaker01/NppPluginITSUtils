@@ -41,8 +41,11 @@ namespace ITS.Utils {
             "ERR016 - DMS Record was not found in: {0} using path: {1}",
             "ERR017 - Data element {0} not found.",
             "ERR018 - Paragraph Name {0} not found",
-            "ERR019 - Text",
-            "ERR020 - Text"
+            "ERR019 - {0} not found at path: {1}",
+            "ERR020 - not used {0}"
         };
+
+        public static string WORKING_STORAGE_SECTION = "WORKING-STORAGE SECTION";
+        public static string PROCEDURE_DIVISION      = "PROCEDURE DIVISION";
     }
 }

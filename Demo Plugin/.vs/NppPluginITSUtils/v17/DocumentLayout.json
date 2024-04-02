@@ -1,0 +1,69 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|d:\\repos\\npppluginitsutils\\demo plugin\\npppluginitsutils\\itsplugin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|solutionrelative:npppluginitsutils\\itsplugin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\npppluginitsutils\\plugininfrastructure\\settingsbase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|solutionrelative:npppluginitsutils\\plugininfrastructure\\settingsbase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\npppluginitsutils\\utils\\itsenums.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|solutionrelative:npppluginitsutils\\utils\\itsenums.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ITSPlugin.cs",
+              "DocumentMoniker": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\ITSPlugin.cs",
+              "RelativeDocumentMoniker": "NppPluginITSUtils\\ITSPlugin.cs",
+              "ToolTip": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\ITSPlugin.cs",
+              "RelativeToolTip": "NppPluginITSUtils\\ITSPlugin.cs",
+              "ViewState": "AQIAACgAAAAAAAAAAAAhwEIAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-04-02T21:39:29.845Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "SettingsBase.cs",
+              "DocumentMoniker": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\PluginInfrastructure\\SettingsBase.cs",
+              "RelativeDocumentMoniker": "NppPluginITSUtils\\PluginInfrastructure\\SettingsBase.cs",
+              "ToolTip": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\PluginInfrastructure\\SettingsBase.cs",
+              "RelativeToolTip": "NppPluginITSUtils\\PluginInfrastructure\\SettingsBase.cs",
+              "ViewState": "AQIAAAYAAAAAAAAAAAAAABYAAAAsAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-01-17T23:03:18.982Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ITSEnums.cs",
+              "DocumentMoniker": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\Utils\\ITSEnums.cs",
+              "RelativeDocumentMoniker": "NppPluginITSUtils\\Utils\\ITSEnums.cs",
+              "ToolTip": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\Utils\\ITSEnums.cs",
+              "RelativeToolTip": "NppPluginITSUtils\\Utils\\ITSEnums.cs",
+              "ViewState": "AQIAADAAAAAAAAAAAAAswE0AAAAVAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-01-17T18:17:36.94Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
