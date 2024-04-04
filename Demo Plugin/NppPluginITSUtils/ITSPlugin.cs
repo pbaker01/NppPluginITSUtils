@@ -11,6 +11,8 @@ using static System.Windows.Forms.LinkLabel;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using ITS.Utils;
 using System.Text.RegularExpressions;
+using System.Runtime.CompilerServices;
+using System.Collections.Generic;
 
 namespace Kbg.NppPluginNET
 {
@@ -39,6 +41,11 @@ namespace Kbg.NppPluginNET
     /// </summary>
     class Main
     {
+        static IScintillaGateway editor;
+        static INotepadPPGateway notepad = new NotepadPPGateway();
+
+        static HashSet<IntPtr> openedFiles = new HashSet<IntPtr>();
+
         static internal void CommandMenuInit() 
         {
             Kbg.Demo.Namespace.Main.CommandMenuInit();
@@ -58,11 +65,25 @@ namespace Kbg.NppPluginNET
          * Listener for Notifications
          */
         public static void OnNotification(ScNotification notification) {
-            // File Opened Notification - idFrom header field contains the BufferID
-            if (notification.Header.Code == (uint)NppMsg.NPPN_FILEOPENED) {
-                // Change buffer language type to COBOL - agr1 is BufferID arg2 is LangType
-                Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETBUFFERLANGTYPE, notification.Header.IdFrom, (int) LangType.L_COBOL);
+            uint code = notification.Header.Code;
+
+            switch (code) {
+                case (uint) NppMsg.NPPN_FILEOPENED: {
+                        openedFiles.Add(notification.Header.IdFrom);
+                        break;
+                    }
+                case (uint) NppMsg.NPPN_BUFFERACTIVATED: {
+                        if (openedFiles.Contains(notification.Header.IdFrom)) {
+                            openedFiles.Remove(notification.Header.IdFrom);
+                            editor = new ScintillaGateway(PluginBase.GetCurrentScintilla());
+                            if (editor.GetText(1600).Contains(ITSConstants.IDENTIFICATION_DIVISION)) {
+                                Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETBUFFERLANGTYPE, notification.Header.IdFrom, (int) LangType.L_COBOL);
+                            }
+                        }
+                        break;
+                    }
             }
+            return;
         }
 
         internal static string PluginName { get { return Kbg.Demo.Namespace.Main.PluginName; }}
@@ -330,12 +351,23 @@ namespace Kbg.Demo.Namespace {
             editor.ShowLines(0, editor.GetLineCount() - 1);
         }
 
-        static void setCobolLangForAllTabs() {
-            // Set read only    
-            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MENUCOMMAND, 0, NppMenuCmd.IDM_EDIT_SETREADONLY);
+        static void processFileOpened(int pBufferID) {
+            string path = GetFilePath(pBufferID);
 
+            // If this file has an extension then
+            string extension;
+            extension = Path.GetExtension(path);
+            if (Path.GetExtension(path).Length > 0)
+                return;
 
+            // Change buffer language type to COBOL - agr1 is BufferID arg2 is LangType
+            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETBUFFERLANGTYPE, pBufferID, (int)LangType.L_COBOL);
+        }
 
+        static string GetFilePath(int bufferId) {
+            var path = new StringBuilder(2000);
+            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETFULLPATHFROMBUFFERID, bufferId, path);
+            return path.ToString();
         }
 
 

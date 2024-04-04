@@ -47,5 +47,6 @@ namespace ITS.Utils {
 
         public static string WORKING_STORAGE_SECTION = "WORKING-STORAGE SECTION";
         public static string PROCEDURE_DIVISION      = "PROCEDURE DIVISION";
+        public static string IDENTIFICATION_DIVISION = "IDENTIFICATION DIVISION";
     }
 }
