@@ -47,6 +47,12 @@ namespace JSON_Tools.Utils
             Category("1-General"), DefaultValue("")]
         public string systemProcFile { get; set; }
 
+        [Description("Windows path to a scratch (work) folder.\r\n" +
+                     "This is the folder where files with expanded copy\r\n" + 
+                     "procs are saved. Example O:\\NPP_Scratch_Folder\\"),
+            Category("1-General"), DefaultValue("")]
+        public string scratchFolderPath { get; set; }
+
         #endregion
 
         #region 2-Development Environment

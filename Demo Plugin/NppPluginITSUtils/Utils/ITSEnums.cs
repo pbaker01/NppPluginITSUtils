@@ -21,6 +21,13 @@ namespace ITS.Utils
             System_Proc = 2
         }
 
+        public enum PROC_SEARCH_ORDER {
+            SEARCH_FILE_1 = 0,
+            SEARCH_FILE_2 = 1,
+            SEARCH_FILE_3 = 2,
+            SEARCH_FILE_4 = 3
+        }
+
         public enum CHG_CMMT_FORMAT {
             IIMMYY = 0,
             MMYYII = 1

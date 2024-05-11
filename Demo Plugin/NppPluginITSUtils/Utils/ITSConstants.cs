@@ -7,10 +7,9 @@ using System.Text;
 using System.Threading.Tasks;
 using static ITS.Utils.ITSENums;
 
-namespace ITS.Utils { 
+namespace ITS.Utils {
 
-    public static class ITSConstants
-    {
+    public static class ITSConstants {
         public static int msgIndexError = 20;
 
         /*
@@ -42,11 +41,26 @@ namespace ITS.Utils {
             "ERR017 - Data element {0} not found.",
             "ERR018 - Paragraph Name {0} not found",
             "ERR019 - {0} not found at path: {1}",
-            "ERR020 - not used {0}"
+            "ERR020 - Unable to create scratch file. Check scratch folder in settings."
         };
+
+        public static string EXPMSG001 = "      * EXPMSG - Proc File search order.";
+        public static string EXPMSG002 = "      * EXPMSG - PROC {0} was not found in file at path: \n" +
+                                         "      * EXPMSG - {1}";
+        public static string EXPMSG003 = "      * EXPMSG - {0} not found *****";
+        public static string EXPMSG004 = "      * EXPMSG - {0} loaded from: {1}";
+        public static string EXPMSG005 = "      * EXPMSG - {0} detected.  Swithing to UCOB.";
+        public static string EXPMSG006 = "      * EXPMSG - File-{0} -> {1}";
+
+
 
         public static string WORKING_STORAGE_SECTION = "WORKING-STORAGE SECTION";
         public static string PROCEDURE_DIVISION      = "PROCEDURE DIVISION";
         public static string IDENTIFICATION_DIVISION = "IDENTIFICATION DIVISION";
+        public static string PROC = "PROC";
+        public static string END_STMT = "END";
+        public static string SC_UCOB  = "UCOB";
+        public static string SC_BOTH  = "BOTH";
+        public static string TEST = "TEST";
     }
 }

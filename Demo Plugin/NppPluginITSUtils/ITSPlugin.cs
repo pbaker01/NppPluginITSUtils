@@ -13,6 +13,9 @@ using ITS.Utils;
 using System.Text.RegularExpressions;
 using System.Runtime.CompilerServices;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.ComTypes;
+using System.Runtime.InteropServices;
+using System.Diagnostics.Eventing.Reader;
 
 namespace Kbg.NppPluginNET
 {
@@ -76,8 +79,14 @@ namespace Kbg.NppPluginNET
                         if (openedFiles.Contains(notification.Header.IdFrom)) {
                             openedFiles.Remove(notification.Header.IdFrom);
                             editor = new ScintillaGateway(PluginBase.GetCurrentScintilla());
-                            if (editor.GetText(1600).Contains(ITSConstants.IDENTIFICATION_DIVISION)) {
-                                Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETBUFFERLANGTYPE, notification.Header.IdFrom, (int) LangType.L_COBOL);
+                            int langType = (int) Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETBUFFERLANGTYPE, notification.Header.IdFrom, 0);
+                            string textBlock = editor.GetText(1600);
+                            if (langType == 0) {
+                                if (textBlock.Contains(ITSConstants.IDENTIFICATION_DIVISION)) {
+                                    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETBUFFERLANGTYPE, notification.Header.IdFrom, (int)LangType.L_COBOL);
+                                } else if (textBlock.Substring(0,Math.Min(textBlock.Length,80)).Contains(ITSConstants.PROC)) {
+                                    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETBUFFERLANGTYPE, notification.Header.IdFrom, (int)LangType.L_COBOL);
+                                }
                             }
                         }
                         break;
@@ -107,6 +116,11 @@ namespace Kbg.Demo.Namespace {
         static string SET = "SET";
         static string AREA = "AREA";
         static string RECORD = "RECORD";
+
+        static string copyPattern = "^...... +COPY *([A-Z0-9-]+)\\. *$";
+        static string sourceComputerPattern = "^...... +SOURCE-COMPUTER *\\. *([A-Z0-9-]+)\\. *$";
+        static Regex copyRegEx = new Regex(copyPattern, RegexOptions.IgnoreCase);
+        static Regex sourceComputerRegEx = new Regex(sourceComputerPattern, RegexOptions.IgnoreCase);
 
         // general stuff things
         public static JSON_Tools.Utils.Settings settings = new JSON_Tools.Utils.Settings();
@@ -175,28 +189,28 @@ namespace Kbg.Demo.Namespace {
             PluginBase.SetCommand(2, "---", null);
             PluginBase.SetCommand(3, "Toggle COBOL Comment", toggleCobolComment, new ShortcutKey(true, true, true, Keys.C));
             PluginBase.SetCommand(4, "Add Author's initials and MMYY", addAuthorDate);
-            PluginBase.SetCommand(5, "---", null);
-            PluginBase.SetCommand(6, "View ACOB COBOL Proc", loadACOBCOBOLProc, new ShortcutKey(true, true, true, Keys.A));
-            PluginBase.SetCommand(7, "View UCOB COBOL Proc", loadUCOBCOBOLProc, new ShortcutKey(true, true, true, Keys.U));
-            PluginBase.SetCommand(8, "View System Proc (DPS)", loadSystemProc, new ShortcutKey(true, true, true, Keys.S));
-            PluginBase.SetCommand(9, "---", null);
-            PluginBase.SetCommand(10, "View DMS Schema Area", viewDMSSchemaArea);
-            PluginBase.SetCommand(10, "View DMS Schema Set", viewDMSSchemaSet);
-            PluginBase.SetCommand(10, "View DMS Schema Record", viewDMSSchemaRecord);
-            PluginBase.SetCommand(11, "---", null);
-            PluginBase.SetCommand(12, "View Program/Element from Lcl Workspace.", loadEltFromWorkspace, new ShortcutKey(true, true, true, Keys.W));
-            PluginBase.SetCommand(13, "View Program/Element from Env SRC file.", loadEltFromSRCFile, new ShortcutKey(true, true, true, Keys.F));
-            PluginBase.SetCommand(14, "---", null);
-            PluginBase.SetCommand(15, "Find Working Storage.", findWorkingStorageField, new ShortcutKey(true, true, true, Keys.E));
-            PluginBase.SetCommand(16, "Find Paragraph Name.", findParagraphName, new ShortcutKey(true, true, true, Keys.P));
-            PluginBase.SetCommand(17, "---", null);
-            PluginBase.SetCommand(18, "Hide Comment Lines", hideCommentLines);
-            PluginBase.SetCommand(19, "Show Comment Lines", showCommentLines);
-            PluginBase.SetCommand(20, "---", null);
-            PluginBase.SetCommand(21, "Add Display Lines", addDisplayLines);
-            PluginBase.SetCommand(21, "Delete xxTEST Lines", deletexxTESTLines);
-
-
+            PluginBase.SetCommand(5, "Add xxTEST in sequence column", addXXTest);
+            PluginBase.SetCommand(6, "Show Comment Lines", showCommentLines);
+            PluginBase.SetCommand(7, "Show Comment Lines", showCommentLines);
+            PluginBase.SetCommand(8, "---", null);
+            PluginBase.SetCommand(9, "View ACOB COBOL Proc", loadACOBCOBOLProc, new ShortcutKey(true, true, true, Keys.A));
+            PluginBase.SetCommand(10, "View UCOB COBOL Proc", loadUCOBCOBOLProc, new ShortcutKey(true, true, true, Keys.U));
+            PluginBase.SetCommand(11, "View System Proc (DPS)", loadSystemProc, new ShortcutKey(true, true, true, Keys.S));
+            PluginBase.SetCommand(12, "---", null);
+            PluginBase.SetCommand(13, "View DMS Schema Area", viewDMSSchemaArea);
+            PluginBase.SetCommand(14, "View DMS Schema Set", viewDMSSchemaSet);
+            PluginBase.SetCommand(15, "View DMS Schema Record", viewDMSSchemaRecord);
+            PluginBase.SetCommand(16, "---", null);
+            PluginBase.SetCommand(17, "View Program/Element from Lcl Workspace.", loadEltFromWorkspace, new ShortcutKey(true, true, true, Keys.W));
+            PluginBase.SetCommand(18, "View Program/Element from Env SRC file.", loadEltFromSRCFile, new ShortcutKey(true, true, true, Keys.F));
+            PluginBase.SetCommand(19, "---", null);
+            PluginBase.SetCommand(20, "Find Working Storage.", findWorkingStorageField, new ShortcutKey(true, true, true, Keys.E));
+            PluginBase.SetCommand(21, "Find Paragraph Name.", findParagraphName, new ShortcutKey(true, true, true, Keys.P));
+            PluginBase.SetCommand(22, "---", null);
+            PluginBase.SetCommand(23, "Add Display Lines", addDisplayLines);
+            PluginBase.SetCommand(24, "Delete xxTEST Lines", deletexxTESTLines);
+            PluginBase.SetCommand(25, "---", null);
+            PluginBase.SetCommand(26, "Expand Copy Statements", expandCopyStmts);
         }
 
         static internal void SetToolBarIcon() { }
@@ -211,6 +225,381 @@ namespace Kbg.Demo.Namespace {
         static void OpenSettings() {
             settings.ShowDialog("Settings for NY ITS NPP Plugin");
         }
+
+        /**
+         * This function expands all of the COPY statements found in the COBOL program.
+         * Note, there is no check if the file is actually a COBOL program.
+         * 
+         * There are several PROC files and the order these files are search varys
+         * depending on the SOURCE-COMPUTER. statement.  If UCOB or BOTH follows
+         * SOURCE-COMPUTER then the UCOB procfile is searched ahead of the ACOB
+         * procs.  The system proc file is always searched last. If the 
+         * SOURCE-COMPUTER statement is not found or can't be processed the processing
+         * defaults to ACOB search order where the ACOB proc files (1 and 2) are searched
+         * first.
+         * 
+         **/
+        static void expandCopyStmts() {
+            Dictionary<string, string> aliasDictionary = loadAliasDictionary();
+            Dictionary<int, string> procFileDictionary = loadProcFileDictionary();
+
+            string readPath = notepad.GetCurrentFilePath();
+            // string writePath = Path.GetTempFileName();
+            string writePath = getScratchFilePath(Path.GetFileNameWithoutExtension(readPath), Path.GetExtension(readPath)) ;
+            if (writePath == null) {
+                MessageBox.Show(errorText[(int) ERRORS.ITSERR020]);
+                return;
+            }
+
+            const Int32 BufferSize = 512;
+
+            StreamWriter writer;
+
+            try {
+                writer = new StreamWriter(writePath);
+                using (var fileStream = File.OpenRead(readPath))
+                using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize)) {
+                    String line;
+                    while ((line = streamReader.ReadLine()) != null) {
+                        processCOBOLLine(line, writer, aliasDictionary, procFileDictionary);
+                    }
+                    writer.Close();
+                }
+            }
+            catch (Exception ex) {
+                Console.WriteLine(ex.ToString());
+            }
+
+            notepad.OpenFile(writePath);
+        }
+
+        static void processCOBOLLine(string pLine, StreamWriter pWriter, Dictionary<string, string> pAliasDictionary, Dictionary<int, string> procFileDictionary) {
+            Match m = null;
+            Group g = null;
+            char[] lineTextAsChars;
+            string copyProcName;
+            string sourceComputerName;
+            string copyProcEltName;
+            bool sourceComputerProcessed = false;
+
+            try {
+                if (!sourceComputerProcessed) {
+                    m = sourceComputerRegEx.Match(pLine);
+                    if (m.Success) {
+                        sourceComputerProcessed = true;
+                        pWriter.WriteLine(pLine);
+                        g = m.Groups[1];
+                        CaptureCollection cc = g.Captures;
+                        Capture c = cc[0];
+                        sourceComputerName = c.ToString();
+                        if (sourceComputerName.ToUpper().Equals(SC_UCOB) ||
+                            sourceComputerName.ToUpper().Equals(SC_BOTH)) {
+                            pWriter.WriteLine(String.Format(EXPMSG005, sourceComputerName));
+                            adjProcSearchOrder(procFileDictionary, pWriter);
+                        }
+                        writeProcFileSearchOrder(procFileDictionary, pWriter);
+                        return;
+                    }
+                }
+                
+                m = copyRegEx.Match(pLine);
+                if (m.Success) {
+                    g = m.Groups[1];
+                    CaptureCollection cc = g.Captures;
+                    Capture c = cc[0];
+                    copyProcName = c.ToString();
+
+                    lineTextAsChars = pLine.ToCharArray();
+                    lineTextAsChars[6] = ASTERISK_CHAR;
+                    pLine = new string(lineTextAsChars);
+                    pWriter.WriteLine(pLine);
+                    if (pAliasDictionary.ContainsKey(copyProcName)) {
+                        copyProcEltName = pAliasDictionary[copyProcName];
+                    } else {
+                        // Check if requesting a DPS screen.
+                        // The screen proc contains two procs: the screen and the INIT procs
+                        if (copyProcName.StartsWith(SCREEN_PREFIX) && (!copyProcName.Contains(FWD_SLASH_CHAR.ToString()))) {
+                                string[] elementNamePart = copyProcName.Split('-');
+                                if (elementNamePart.Length == 4) {
+                                    copyProcEltName = elementNamePart[0] + "-" + elementNamePart[elementNamePart.Length - 2] + FWD_SLASH_CHAR + COBP_VERSION;
+                                }
+                                else if (elementNamePart.Length == 3) {
+                                    copyProcEltName = elementNamePart[0] + "-" + elementNamePart[elementNamePart.Length - 1] + FWD_SLASH_CHAR + COBP_VERSION;
+                                } else {
+                                    copyProcEltName = copyProcName;
+                                }
+                        } else {
+                            copyProcEltName = copyProcName;
+                        }
+                    }
+                    processCOPYLine(copyProcName, copyProcEltName, pWriter, procFileDictionary);
+
+                } else {
+                    pWriter.WriteLine(pLine);
+                }
+            }
+            catch (Exception ex) {
+                Console.WriteLine(ex.ToString());
+            }
+        }
+
+        static void processCOPYLine(string pCopyProcName, string pCopyProcEltName, StreamWriter pWriter, Dictionary<int, string> pProcFileDictionary) {
+            string copyProcFilePath = "";
+            bool found = false;
+
+            for (int i = 0; i < 4; i++) {
+                if (pProcFileDictionary.ContainsKey(i)) {
+                    // Replace a forward slash with a "." to indicate extension (version in Unisys)
+                    string eltFileFmt = pCopyProcEltName.Replace(FWD_SLASH_CHAR, PERIOD_CHAR);
+                    copyProcFilePath = pProcFileDictionary[i] + eltFileFmt;
+                    if (File.Exists(copyProcFilePath)) {
+                        insertCopyProc(copyProcFilePath, pCopyProcName, pWriter);
+                        found = true;
+                        break;
+                    }
+                } 
+            }
+
+            if (!found) {
+                // If it is a DPS proc is may need the COBP version. 
+                if (!pCopyProcEltName.Contains(FWD_SLASH_CHAR.ToString())) {
+                    copyProcFilePath = pProcFileDictionary[(int) PROC_SEARCH_ORDER.SEARCH_FILE_4] + pCopyProcEltName + FWD_SLASH_CHAR + COBP_VERSION;
+                    if (File.Exists(copyProcFilePath)) {
+                        insertCopyProc(copyProcFilePath, pCopyProcName, pWriter);
+                        found = true;
+                        // If there is no fwd slash then concatenate "/COBP" to elemenent name. 
+                    }
+                }
+            }
+
+            if (!found) {
+                pWriter.WriteLine(String.Format(EXPMSG003, pCopyProcName));
+            } else {
+                pWriter.WriteLine(string.Format(EXPMSG004, pCopyProcName, copyProcFilePath));
+            }
+        }
+
+        static void insertCopyProc(string pCopyProcFilePath, string pCopyProcName, StreamWriter pWriter) {
+
+            Int32 BufferSize = 512;
+            bool strProcFound = false;
+
+
+            try {
+                using (var fileStream = File.OpenRead(pCopyProcFilePath))
+                using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize)) {
+                    string line;
+                    while (true) {
+                        line = streamReader.ReadLine();
+                        if (line == null) {
+                            break;
+                        }
+
+                        if (!strProcFound) {
+                            if (line.StartsWith(pCopyProcName)) {
+                                strProcFound = true;
+                                continue;
+                            }
+                        } else {
+                            if (line.Trim() == ITSConstants.END_STMT) {
+                                break;
+                            }
+                            else {
+                                pWriter.WriteLine(line);
+                            }
+                        }
+                    }
+
+                    if (!strProcFound) {
+                        pWriter.WriteLine(String.Format(EXPMSG002, pCopyProcName, pCopyProcFilePath));
+                    }
+
+                    return;
+                }
+            }
+            catch (Exception ex) {
+                Console.WriteLine(ex.ToString());
+                return;
+            }
+        }
+
+
+        static Dictionary<string, string> loadAliasDictionary() {
+
+            Dictionary<string, string> aliasDictionary = new Dictionary<string, string>();
+
+
+            string path = notepad.GetNppPath();
+            path = path + ALIAS_FILE_NAME;
+
+            // If there is no alias file then just exit with alias = null
+            if (!File.Exists(path)) {
+                return aliasDictionary;
+            }
+
+            Int32 BufferSize = 512;
+
+            // Read alias file and search for key = pEltName. 
+            // When found return alias.
+            try {
+                using (var fileStream = File.OpenRead(path))
+                using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize)) {
+                    string line;
+                    while (true) {
+                        line = streamReader.ReadLine();
+                        if (line == null) {
+                            break;
+                        }
+
+                        if (line.Trim().Length == 0 || line.TrimStart().StartsWith(HASH_CHAR.ToString())) {
+                            continue; // skip this line 
+                        }
+
+                        line = line.Trim();
+                        string[] names = line.Split(EQUALS_CHAR);
+
+                        if (names.Length != 2) {
+                            continue;
+                        }
+
+                        aliasDictionary.Add(names[0].Trim().ToUpper(), names[1].Trim().ToUpper());
+                    }
+                    return aliasDictionary;
+                }
+            }
+            catch (Exception ex) {
+                Console.WriteLine(ex.ToString());
+                return aliasDictionary;
+            }
+        }
+
+        static Dictionary<int, string> loadProcFileDictionary() {
+
+            Dictionary<int, string> procFileDictionary = new Dictionary<int, string>();
+            string procFilePath;
+
+            if (settings.workingEnvt == ENVIRONMENT.Development) {
+                procFilePath = getProcFilePath(settings.DEVACOBproc1File);  
+                if (procFilePath != null) procFileDictionary.Add((int) PROC_SEARCH_ORDER.SEARCH_FILE_1, procFilePath);
+                procFilePath = getProcFilePath(settings.DEVACOBproc2File);
+                if (procFilePath != null) procFileDictionary.Add((int) PROC_SEARCH_ORDER.SEARCH_FILE_2, procFilePath);
+                procFilePath = getProcFilePath(settings.DEVUCOBprocFile);
+                if (procFilePath != null) procFileDictionary.Add((int)PROC_SEARCH_ORDER.SEARCH_FILE_3, procFilePath);
+            }
+            else if (settings.workingEnvt == ENVIRONMENT.UserTest) {
+                procFilePath = getProcFilePath(settings.TSTACOBproc1File);
+                if (procFilePath != null) procFileDictionary.Add((int) PROC_SEARCH_ORDER.SEARCH_FILE_1, procFilePath);
+                procFilePath = getProcFilePath(settings.TSTACOBproc2File);
+                if (procFilePath != null) procFileDictionary.Add((int) PROC_SEARCH_ORDER.SEARCH_FILE_2, procFilePath);
+                procFilePath = getProcFilePath(settings.TSTUCOBprocFile);
+                if (procFilePath != null) procFileDictionary.Add((int)PROC_SEARCH_ORDER.SEARCH_FILE_3, procFilePath);
+            }
+            else if (settings.workingEnvt == ENVIRONMENT.Pseudo) {
+                procFilePath = getProcFilePath(settings.PSDACOBproc1File);
+                if (procFilePath != null) procFileDictionary.Add((int) PROC_SEARCH_ORDER.SEARCH_FILE_1, procFilePath);
+                procFilePath = getProcFilePath(settings.PSDACOBproc2File);
+                if (procFilePath != null) procFileDictionary.Add((int) PROC_SEARCH_ORDER.SEARCH_FILE_2, procFilePath);
+                procFilePath = getProcFilePath(settings.PSDUCOBprocFile);
+                if (procFilePath != null) procFileDictionary.Add((int)PROC_SEARCH_ORDER.SEARCH_FILE_3, procFilePath);
+            }
+
+            procFilePath = getProcFilePath(settings.systemProcFile);
+            if (procFilePath != null) procFileDictionary.Add((int)PROC_SEARCH_ORDER.SEARCH_FILE_4, procFilePath);
+
+            return procFileDictionary;
+        }
+
+        static void adjProcSearchOrder(Dictionary<int, string> procFileDictionary, StreamWriter pWriter) {
+
+            string acobProcFile1Path = null;
+            string acobProcFile2Path = null;
+            string ucobProcFilePath = null;
+            string sysProcFilePath = null;
+
+            // Current order: ACOB-P1 ACOB-P2 UCOB SYSPROC
+            // New order:     UCOB ACOB-P1 ACOB-P2 SYSPROC
+
+            if (procFileDictionary.ContainsKey((int) PROC_SEARCH_ORDER.SEARCH_FILE_1)) {
+                acobProcFile1Path = procFileDictionary[(int)PROC_SEARCH_ORDER.SEARCH_FILE_1];
+                procFileDictionary.Remove((int)PROC_SEARCH_ORDER.SEARCH_FILE_1);
+            }
+
+            if (procFileDictionary.ContainsKey((int)PROC_SEARCH_ORDER.SEARCH_FILE_2)) {
+                acobProcFile2Path = procFileDictionary[(int)PROC_SEARCH_ORDER.SEARCH_FILE_2];
+                procFileDictionary.Remove((int)PROC_SEARCH_ORDER.SEARCH_FILE_2);
+            }
+
+            if (procFileDictionary.ContainsKey((int)PROC_SEARCH_ORDER.SEARCH_FILE_3)) {
+                ucobProcFilePath = procFileDictionary[(int)PROC_SEARCH_ORDER.SEARCH_FILE_3];
+                procFileDictionary.Remove((int)PROC_SEARCH_ORDER.SEARCH_FILE_3);
+            }
+
+            if (procFileDictionary.ContainsKey((int)PROC_SEARCH_ORDER.SEARCH_FILE_4)) {
+                sysProcFilePath = procFileDictionary[(int)PROC_SEARCH_ORDER.SEARCH_FILE_4];
+                procFileDictionary.Remove((int)PROC_SEARCH_ORDER.SEARCH_FILE_4);
+            }
+
+            if (ucobProcFilePath != null) procFileDictionary.Add((int)PROC_SEARCH_ORDER.SEARCH_FILE_1, ucobProcFilePath);
+            if (acobProcFile1Path != null) procFileDictionary.Add((int)PROC_SEARCH_ORDER.SEARCH_FILE_2, acobProcFile1Path);
+            if (acobProcFile2Path != null) procFileDictionary.Add((int)PROC_SEARCH_ORDER.SEARCH_FILE_3, acobProcFile2Path);
+            if (sysProcFilePath != null) procFileDictionary.Add((int)PROC_SEARCH_ORDER.SEARCH_FILE_4, sysProcFilePath);
+        }
+
+        static void writeProcFileSearchOrder(Dictionary<int, string> procFileDictionary, StreamWriter pWriter) {
+            pWriter.WriteLine(EXPMSG001);
+            for (int i = 0; i < 4; i++) {
+                if (procFileDictionary.ContainsKey(i)) {
+                    pWriter.WriteLine(String.Format(EXPMSG006, i, procFileDictionary[i]));
+                }
+            }
+        }
+
+
+        static string getProcFilePath(string pOS2200ProcFileName) { 
+            string procFilePath = null;
+
+            if (pOS2200ProcFileName == null || pOS2200ProcFileName.Trim().Length == 0) {
+                return procFilePath;
+            }
+
+            string[] fileParts = pOS2200ProcFileName.Split(ASTERISK_CHAR);
+            int numAsterisks = fileParts.Length - 1;
+            if (numAsterisks != 1) {
+                return procFilePath;
+            }
+
+            // Replace * in program file name with a back slash
+            string pgmFileFmt = pOS2200ProcFileName.Replace(ASTERISK_CHAR, '\\');
+
+            // Build path to file/element by adding the mapped drive letter.
+            char driveLetter = (char)('A' + settings.mappedDrive);
+            procFilePath = (driveLetter + ":") + "\\" + pgmFileFmt + "\\";
+
+            return procFilePath;
+        }
+
+        static string getScratchFilePath(string pFileName, string pFileExt) {
+            string scratchPath = settings.scratchFolderPath;
+
+            if (scratchPath == null || scratchPath.Length == 0) {
+                return null;
+            }
+
+            if (pFileName != null && pFileName.Length > 0) {
+                pFileName = pFileName + "-EXP";
+            } else {
+                pFileName = "NPP-EXP";
+            }
+
+            scratchPath = scratchPath + pFileName;
+            if (pFileExt != null || pFileExt.Length > 0) {
+                scratchPath = scratchPath + pFileExt;
+            }
+
+            return scratchPath;
+        }
+
+
 
         //  Display the settings dialog.
         //  Allows user to configure required file names. 
@@ -452,6 +841,8 @@ namespace Kbg.Demo.Namespace {
 
         static debugContext processWS(debugContext debugInfo) {
 
+            if (true) return debugInfo;
+
             string wsFile = "cobolDspWS.cbl";
 
             string templatePath = notepad.GetPluginConfigPath() + "\\ITSPlugin\\" + wsFile;
@@ -461,6 +852,8 @@ namespace Kbg.Demo.Namespace {
                 debugInfo.fatalError = true;
                 return debugInfo;
             }
+
+            string punchCardCol = getInitials() + TEST;
 
             // COBOL Working Storage Template exists. Open and Read.
 
@@ -473,6 +866,7 @@ namespace Kbg.Demo.Namespace {
                     // Get next line
                     line = streamReader.ReadLine();
                     line = Regex.Replace(line, @"\t|\n|\r", "");
+                    line = punchCardCol + line.Substring(6);
                     debugInfo.lineNum = debugInfo.lineNum+1;
                     editor.GotoLine(debugInfo.lineNum);
                     editor.NewLine();
@@ -487,6 +881,8 @@ namespace Kbg.Demo.Namespace {
 
         static debugContext processPD(debugContext debugInfo) {
 
+            if (true) return debugInfo;
+
             string wsFile = "cobolDspPD.cbl";
 
             string templatePath = notepad.GetPluginConfigPath() + "\\ITSPlugin\\" + wsFile;
@@ -496,6 +892,8 @@ namespace Kbg.Demo.Namespace {
                 debugInfo.fatalError = true;
                 return debugInfo;
             }
+
+            string punchCardCol = getInitials() + TEST;
 
             // COBOL Working Storage Template exists. Open and Read.
             debugInfo.lineNum = editor.GetLineCount();
@@ -510,6 +908,7 @@ namespace Kbg.Demo.Namespace {
                     // Get next line
                     line = streamReader.ReadLine();
                     line = Regex.Replace(line, @"\t|\n|\r", "");
+                    line = punchCardCol + line.Substring(6);
                     debugInfo.lineNum = debugInfo.lineNum + 1;
                     editor.GotoLine(debugInfo.lineNum);
                     editor.NewLine();
@@ -685,26 +1084,7 @@ namespace Kbg.Demo.Namespace {
             return;
         }
 
-        /*
-        * This function iterates through the lines selected and toggle the 
-        * comment character in column 7.  If the line length is <= 6 the 
-        * line is skipped. If the character at column 7 is a space or 
-        * asterisk then toggle the value. If the character is neither a 
-        * space or asterisk then skip line.
-        */
         static void addAuthorDate() {
-            // Get selection start and end positions.
-            // If selStr and selEnd are equal then there is no selection,
-            // just process the line the caret is on.
-            var strSel = editor.GetSelectionStart();
-            var endSel = editor.GetSelectionEnd();
-
-            // Get the line numbers associated with the start and end positions.
-            // The strLine and endLine may be the same line.
-            var strLine = editor.LineFromPosition(strSel);
-            var endLine = editor.LineFromPosition(endSel);
-
-            // Create string baseed on selected format: iimmyy or mmyyii.
 
             string initials = getInitials();
 
@@ -723,6 +1103,41 @@ namespace Kbg.Demo.Namespace {
                     chgCmmtString = initials + DateTime.Now.ToString("MMy");
                     break;
             }
+
+            addSeqColComment(chgCmmtString);
+
+            return;
+        }
+
+        static void addXXTest() {
+
+            addSeqColComment(getInitials() + "TEST");
+
+            return;
+        }
+
+
+
+        /*
+* This function iterates through the lines selected and toggle the 
+* comment character in column 7.  If the line length is <= 6 the 
+* line is skipped. If the character at column 7 is a space or 
+* asterisk then toggle the value. If the character is neither a  
+* space or asterisk then skip line.
+*/
+        static void addSeqColComment(string pComment) {
+            // Get selection start and end positions.
+            // If selStr and selEnd are equal then there is no selection,
+            // just process the line the caret is on.
+            var strSel = editor.GetSelectionStart();
+            var endSel = editor.GetSelectionEnd(); 
+
+            // Get the line numbers associated with the start and end positions.
+            // The strLine and endLine may be the same line.
+            var strLine = editor.LineFromPosition(strSel);
+            var endLine = editor.LineFromPosition(endSel);
+
+            // Create string baseed on selected format: iimmyy or mmyyii.
 
             string lineText;
 
@@ -744,7 +1159,7 @@ namespace Kbg.Demo.Namespace {
                     lineText = lineText.PadRight(6, ' ');
                 }
 
-                lineText = chgCmmtString + lineText.Substring(6);
+                lineText = pComment + lineText.Substring(6);
 
                 editor.ReplaceTarget(lineText.Length, lineText);
             }
@@ -1346,7 +1761,7 @@ namespace Kbg.Demo.Namespace {
             Int32 BufferSize = 512;
 
             // Read alias file and search for key = pEltName. 
-            // Wehn found return alias.
+            // When found return alias.
             try {
                 using (var fileStream = File.OpenRead(path))
                 using (var streamReader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize)) {

@@ -7,15 +7,23 @@
       "RelativeMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|solutionrelative:npppluginitsutils\\itsplugin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|d:\\repos\\npppluginitsutils\\visual studio project template c#\\plugininfrastructure\\npppluginnetbase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|d:\\repos\\npppluginitsutils\\demo plugin\\npppluginitsutils\\utils\\itsconstants.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\npppluginitsutils\\utils\\itsconstants.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|solutionrelative:npppluginitsutils\\utils\\itsconstants.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\npppluginitsutils\\utils\\itsenums.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|solutionrelative:npppluginitsutils\\utils\\itsenums.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\npppluginitsutils\\utils\\settings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|solutionrelative:npppluginitsutils\\utils\\settings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\npppluginitsutils\\plugininfrastructure\\settingsbase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|solutionrelative:npppluginitsutils\\plugininfrastructure\\settingsbase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB8FC3A3-93E8-457B-B281-FAFA5119611A}|NppPluginITSUtils\\NppPluginITSUtils.csproj|d:\\repos\\npppluginitsutils\\visual studio project template c#\\plugininfrastructure\\npppluginnetbase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -25,34 +33,8 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 0,
           "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "NppPluginNETBase.cs",
-              "DocumentMoniker": "D:\\Repos\\NppPluginITSUtils\\Visual Studio Project Template C#\\PluginInfrastructure\\NppPluginNETBase.cs",
-              "RelativeDocumentMoniker": "..\\Visual Studio Project Template C#\\PluginInfrastructure\\NppPluginNETBase.cs",
-              "ToolTip": "D:\\Repos\\NppPluginITSUtils\\Visual Studio Project Template C#\\PluginInfrastructure\\NppPluginNETBase.cs",
-              "RelativeToolTip": "..\\Visual Studio Project Template C#\\PluginInfrastructure\\NppPluginNETBase.cs",
-              "ViewState": "AQIAAB4AAAAAAAAAAAAwwDIAAAAMAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-04-03T21:20:49.213Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "ITSConstants.cs",
-              "DocumentMoniker": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\Utils\\ITSConstants.cs",
-              "RelativeDocumentMoniker": "NppPluginITSUtils\\Utils\\ITSConstants.cs",
-              "ToolTip": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\Utils\\ITSConstants.cs",
-              "RelativeToolTip": "NppPluginITSUtils\\Utils\\ITSConstants.cs",
-              "ViewState": "AQIAAAsAAAAAAAAAAAAxwAkAAAATAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-04-03T21:07:56.921Z",
-              "EditorCaption": ""
-            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
@@ -61,23 +43,72 @@
               "RelativeDocumentMoniker": "NppPluginITSUtils\\ITSPlugin.cs",
               "ToolTip": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\ITSPlugin.cs",
               "RelativeToolTip": "NppPluginITSUtils\\ITSPlugin.cs",
-              "ViewState": "AQIAADEAAAAAAAAAAAAgwEoAAAA3AAAA",
+              "ViewState": "AQIAAFYEAAAAAAAAAAAAwGwEAAAzAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-04-03T20:40:00.67Z",
+              "IsPinned": true,
               "EditorCaption": ""
             },
             {
               "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ITSConstants.cs",
+              "DocumentMoniker": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\Utils\\ITSConstants.cs",
+              "RelativeDocumentMoniker": "NppPluginITSUtils\\Utils\\ITSConstants.cs",
+              "ToolTip": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\Utils\\ITSConstants.cs",
+              "RelativeToolTip": "NppPluginITSUtils\\Utils\\ITSConstants.cs",
+              "ViewState": "AQIAACAAAAAAAAAAAAAQwD8AAAAhAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-04-03T21:07:56.921Z",
+              "IsPinned": true
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 3,
+              "Title": "Settings.cs",
+              "DocumentMoniker": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\Utils\\Settings.cs",
+              "RelativeDocumentMoniker": "NppPluginITSUtils\\Utils\\Settings.cs",
+              "ToolTip": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\Utils\\Settings.cs",
+              "RelativeToolTip": "NppPluginITSUtils\\Utils\\Settings.cs",
+              "ViewState": "AQIAABQAAAAAAAAAAAAswDMAAAAVAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-04-09T21:20:12.472Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "SettingsBase.cs",
+              "DocumentMoniker": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\PluginInfrastructure\\SettingsBase.cs",
+              "RelativeDocumentMoniker": "NppPluginITSUtils\\PluginInfrastructure\\SettingsBase.cs",
+              "ToolTip": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\PluginInfrastructure\\SettingsBase.cs",
+              "RelativeToolTip": "NppPluginITSUtils\\PluginInfrastructure\\SettingsBase.cs",
+              "ViewState": "AQIAAAQBAAAAAAAAAAAAwAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-04-09T21:17:15.262Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "NppPluginNETBase.cs",
+              "DocumentMoniker": "D:\\Repos\\NppPluginITSUtils\\Visual Studio Project Template C#\\PluginInfrastructure\\NppPluginNETBase.cs",
+              "RelativeDocumentMoniker": "..\\Visual Studio Project Template C#\\PluginInfrastructure\\NppPluginNETBase.cs",
+              "ToolTip": "D:\\Repos\\NppPluginITSUtils\\Visual Studio Project Template C#\\PluginInfrastructure\\NppPluginNETBase.cs",
+              "RelativeToolTip": "..\\Visual Studio Project Template C#\\PluginInfrastructure\\NppPluginNETBase.cs",
+              "ViewState": "AQIAAB4AAAAAAAAAAAAwwDIAAAAMAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-04-03T21:20:49.213Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "ITSEnums.cs",
               "DocumentMoniker": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\Utils\\ITSEnums.cs",
               "RelativeDocumentMoniker": "NppPluginITSUtils\\Utils\\ITSEnums.cs",
               "ToolTip": "D:\\Repos\\NppPluginITSUtils\\Demo Plugin\\NppPluginITSUtils\\Utils\\ITSEnums.cs",
               "RelativeToolTip": "NppPluginITSUtils\\Utils\\ITSEnums.cs",
-              "ViewState": "AQIAADAAAAAAAAAAAAAswE0AAAAVAAAA",
+              "ViewState": "AQIAADcAAAAAAAAAAAAcwFUAAAAVAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-01-17T18:17:36.94Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-01-17T18:17:36.94Z"
             }
           ]
         }
